@@ -1,13 +1,8 @@
-from flask import Flask, render_template
+from flask import Flask
 from config import Config
-from models import init_db
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
-#initiializing db 
-with app.app_context():
-    init_db()
 
 # ── Register Blueprints (routes) ──────────────────────────
 from routes.poll_routes import poll_bp

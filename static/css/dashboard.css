@@ -1,0 +1,851 @@
+/* ── Global ───────────────────────────────────────────── */
+* {
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── Body ─────────────────────────────────────────────── */
+.db-body {
+    background: #f0f4ff;
+    min-height: 100vh;
+}
+
+/* ── Navbar ───────────────────────────────────────────── */
+.db-navbar {
+    height: 64px;
+    background: rgba(20, 15, 60, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: fixed;       /* stays at top always */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Navbar Left — Logo ───────────────────────────────── */
+.db-navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.db-brand {
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.db-brand-pulse {
+    color: #ffffff;
+}
+
+.db-brand-poll {
+    color: #a5b4fc;
+}
+
+/* ── Navbar Right — User + Logout ─────────────────────── */
+.db-navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.db-username {
+    color: #c7d2fe;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Vertical divider between username and logout */
+.db-nav-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.db-logout-btn {
+    color: #c7d2fe;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.db-logout-btn:hover {
+    color: #ffffff;
+}
+
+/* ── Layout Wrapper ───────────────────────────────────── */
+/* sits below the fixed navbar */
+.db-wrapper {
+    display: flex;
+    margin-top: 64px;      /* same height as navbar */
+    min-height: calc(100vh - 64px);
+    background: #f0f4ff;  
+}
+
+/* ── Sidebar ──────────────────────────────────────────── */
+.db-sidebar {
+    width: 180px;
+    background: #ffffff;
+    border-right: 3px solid #e2e8f0;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    padding: 24px 8px;        /* ← top padding back to 24px */
+    overflow-y: auto;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.06);
+}
+
+
+.db-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* ── Sidebar Nav Items ────────────────────────────────── */
+.db-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.db-nav-item:hover {
+    background: #f5f3ff;
+    color: #4f46e5;
+}
+
+/* Active state — currently selected page */
+.db-nav-item.active {
+    background: #ede9fe;
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.db-nav-item i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* ── Main Content Area ────────────────────────────────── */
+.db-main {
+    margin-left: 180px;                   /* ← match sidebar */
+    flex: 1;
+    padding: 24px 28px;                   /* ← balanced padding */
+    min-height: calc(100vh - 64px);
+    background: #f0f4ff; 
+}
+/* ── Page Header ──────────────────────────────────────── */
+.db-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;  /* ← pushes button to right */
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
+}
+
+.db-page-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e1b4b;
+    margin-bottom: 4px;
+}
+
+.db-page-subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin: 0;
+}
+/* ── Nav Group (wraps toggle + submenu) ───────────────── */
+.db-nav-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Toggle Button (Polls) ────────────────────────────── */
+.db-nav-toggle {
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* ── Chevron Arrow ────────────────────────────────────── */
+.db-chevron {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+/* When submenu is open → rotate arrow up */
+.db-nav-toggle[aria-expanded="true"] .db-chevron {
+    transform: rotate(180deg);
+}
+
+/* ── Submenu Container ────────────────────────────────── */
+.db-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 16px;    /* indent to show hierarchy */
+    margin-top: 4px;
+}
+
+/* ── Submenu Items ────────────────────────────────────── */
+.db-submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    border-left: 2px solid transparent;
+}
+
+.db-submenu-item:hover {
+    background: #f5f3ff;
+    color: #4f46e5;
+    border-left-color: #818cf8;
+}
+
+.db-submenu-item.active {
+    background: #ede9fe;
+    color: #4f46e5;
+    font-weight: 600;
+    border-left-color: #4f46e5;
+}
+
+.db-submenu-item i {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+/* ── Breadcrumb ───────────────────────────────────────── */
+.db-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.db-breadcrumb-link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.db-breadcrumb-link:hover {
+    color: #4338ca;
+}
+
+.db-breadcrumb-sep {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.db-breadcrumb-current {
+    color: #64748b;
+    font-weight: 500;
+}
+/* ── pp-card inside dashboard ─────────────────────────── */
+.db-main .pp-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    border: none;
+    padding: 2rem;
+}
+/* ── Option rows inside dashboard ─────────────────────── */
+.db-main .option-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.db-main .option-row input {
+    flex: 1;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    outline: none;
+}
+
+.db-main .option-row input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+}
+
+.db-main .btn-remove-option {
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.db-main .btn-remove-option:hover {
+    background: #fca5a5;
+}
+
+/* ── Inputs inside dashboard ──────────────────────────── */
+.db-main .pp-input {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    width: 100%;
+}
+
+.db-main .pp-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+    outline: none;
+}
+
+/* ── Labels inside dashboard ──────────────────────────── */
+.db-main .pp-label {
+    font-weight: 600;
+    color: #1e1b4b;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 0.95rem;
+}
+
+/* ── Add option button inside dashboard ───────────────── */
+.db-main .btn-pp-add-option {
+    background: #ede9fe;
+    color: #4f46e5;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.db-main .btn-pp-add-option:hover {
+    background: #ddd6fe;
+    color: #4338ca;
+}
+
+/* ── Primary button inside dashboard ─────────────────── */
+.db-main .btn-pp-primary {
+    background: linear-gradient(135deg, #4f46e5, #818cf8);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.db-main .btn-pp-primary:hover {
+    background: linear-gradient(135deg, #4338ca, #6366f1);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+/* ── Stat Card Link (removes underline) ───────────────── */
+.db-stat-link {
+    text-decoration: none;
+    display: block;
+}
+
+/* ── Stat Card ────────────────────────────────────────── */
+.db-stat-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.db-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Stat Card Left ───────────────────────────────────── */
+.db-stat-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.db-stat-icon {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+}
+
+.db-stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #1e1b4b;
+    line-height: 1;
+}
+
+.db-stat-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+/* ── Card Color Variants ──────────────────────────────── */
+.db-stat-active  { border-left: 4px solid #4f46e5; }
+.db-stat-active  .db-stat-icon { color: #4f46e5; }
+
+.db-stat-total   { border-left: 4px solid #8b5cf6; }
+.db-stat-total   .db-stat-icon { color: #8b5cf6; }
+
+.db-stat-votes   { border-left: 4px solid #06b6d4; }
+.db-stat-votes   .db-stat-icon { color: #06b6d4; }
+
+/* ── Progress Circle ──────────────────────────────────── */
+.db-stat-right {
+    position: relative;
+}
+
+.db-progress-circle {
+    position: relative;
+    width: 72px;
+    height: 72px;
+}
+
+.db-progress-circle svg {
+    width: 72px;
+    height: 72px;
+    transform: rotate(-90deg);  /* start from top */
+}
+
+/* Background ring */
+.db-circle-bg {
+    fill: none;
+    stroke: #f1f5f9;
+    stroke-width: 3;
+}
+
+/* Filled arc */
+.db-circle-fill {
+    fill: none;
+    stroke: #4f46e5;
+    stroke-width: 3;
+    stroke-linecap: round;
+    /* circumference of circle with r=15 is ~94.2 */
+    stroke-dasharray: 94.2;
+    stroke-dashoffset: calc(94.2 - (94.2 * var(--pct)) / 100);
+    transition: stroke-dashoffset 0.6s ease;
+}
+
+/* Color per card */
+.db-stat-active .db-circle-fill { stroke: #4f46e5; }
+.db-stat-total  .db-circle-fill { stroke: #8b5cf6; }
+.db-stat-votes  .db-circle-fill { stroke: #06b6d4; }
+
+/* Percentage text inside circle */
+.db-circle-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1e1b4b;
+}
+
+/* ── Section Header ───────────────────────────────────── */
+.db-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.db-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.db-section-link {
+    font-size: 0.85rem;
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.db-section-link:hover {
+    color: #4338ca;
+}
+
+/* ── Polls Table ──────────────────────────────────────── */
+.db-polls-table {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    overflow: hidden;
+}
+
+/* Table Header Row */
+.db-polls-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 14px 24px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table Data Row */
+.db-polls-table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.db-polls-table-row:last-child {
+    border-bottom: none;
+}
+
+.db-polls-table-row:hover {
+    background: #f8fafc;
+}
+
+/* Question text */
+.db-poll-question {
+    font-weight: 600;
+    color: #1e1b4b;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 16px;
+}
+
+/* Status Badge */
+.db-poll-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.db-badge-active {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.db-badge-ended {
+    background: #ede9fe;
+    color: #4f46e5;
+}
+
+/* Vote count */
+.db-poll-votes {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* Action buttons */
+.db-poll-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.db-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #f5f3ff;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.db-action-btn:hover {
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+/* ── Empty State ──────────────────────────────────────── */
+.db-empty-state {
+    text-align: center;
+    padding: 48px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+}
+
+.db-empty-state i {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.db-empty-state p {
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+/* ── My Polls Card ────────────────────────────────────── */
+.mp-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mp-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Card Top — Status Badge ──────────────────────────── */
+.mp-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mp-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.mp-badge-active {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.mp-badge-expired {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* ── Card Body — Poll Number + Question ───────────────── */
+.mp-card-body {
+    flex: 1;        /* pushes actions to bottom always */
+}
+
+.mp-poll-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mp-poll-question {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    line-height: 1.4;
+    margin: 0;
+
+    /* Limit to 3 lines then ... */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ── Card Meta — Expiry + Votes ───────────────────────── */
+.mp-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.mp-meta-item {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Card Actions — Delete + View ─────────────────────── */
+.mp-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mp-btn-delete {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1.5px solid #fca5a5;
+    background: #fff5f5;
+    color: #ef4444;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mp-btn-delete:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+}
+
+.mp-btn-view {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    background: #ede9fe;
+    color: #4f46e5;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mp-btn-view:hover {
+    background: #4f46e5;
+    color: #ffffff;
+}
+ /* ── Pagination ───────────────────────────────────────── */
+:root {
+    --primary-color: #6366f1; /* Indigo */
+    --bg-soft: #f8fafc;
+    --text-main: #1e293b;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.creative-pagination {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    gap: 15px;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 8px;
+}
+
+.page-num, .page-arrow {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-main);
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-soft);
+}
+
+/* The "Creative" Hover Effect */
+.page-num:hover, .page-arrow:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+}
+
+/* Active Page Styling */
+.page-num.active {
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%; /* Makes the active page a circle */
+    transform: scale(1.1);
+}
+
+/* Specific styling for the arrows */
+.page-arrow {
+    background: white;
+    border: 1px solid #e2e8f0;
+}
+
+/* If you have many pages, hide the ones in the middle */
+@media (max-width: 600px) {
+    .page-num:not(.active) {
+        display: none;
+    }
+}

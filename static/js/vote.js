@@ -1,6 +1,6 @@
-
-// ── Selected option tracker ─────────────────────────────
-let selectedOption = "";
+// ── Selected option trackers ────────────────────────────
+let selectedOptionId   = null;   // ← was: let selectedOption = ""
+let selectedOptionText = "";     // ← new: track text separately
 
 // ── Start countdown timer on page load ─────────────────
 document.addEventListener("DOMContentLoaded", function () {
@@ -8,17 +8,15 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ── Select an option ────────────────────────────────────
-function selectOption(element, optionValue) {
+function selectOption(element, optionId, optionText) {  // ← added optionId, optionText params
     // Remove selected from all options
     document.querySelectorAll(".pp-option")
             .forEach(opt => opt.classList.remove("selected"));
 
     // Mark this one as selected
     element.classList.add("selected");
-    selectedOption = optionValue;
-
-    // Update hidden input
-    document.getElementById("selectedOption").value = optionValue;
+    selectedOptionId   = optionId;    // ← was: selectedOption = optionValue
+    selectedOptionText = optionText;  // ← new
 
     // Hide any previous error
     document.getElementById("voteError").classList.add("d-none");
@@ -26,15 +24,15 @@ function selectOption(element, optionValue) {
 
 // ── Show confirmation modal ─────────────────────────────
 function confirmVote() {
-    if (!selectedOption) {
+    if (!selectedOptionId) {    // ← was: if (!selectedOption)
         document.getElementById("voteError")
                 .classList.remove("d-none");
         return;
     }
 
-    // Show selected option in modal
+    // Show selected option TEXT in modal
     document.getElementById("confirmOptionText")
-            .textContent = selectedOption;
+            .textContent = selectedOptionText;  // ← was: selectedOption
 
     // Show Bootstrap modal
     const modal = new bootstrap.Modal(
@@ -62,23 +60,24 @@ async function submitVote() {
         const response = await fetch(`/poll/${POLL_ID}/vote`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ option: selectedOption })
+            body: JSON.stringify({ option_id: selectedOptionId })  // ← was: option: selectedOption
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // ✅ Success — redirect to results
             btn.innerHTML = `
                 <i class="bi bi-check-circle-fill me-2"></i>
                 Vote Submitted!`;
             setTimeout(() => {
-                window.location.href =
-                    `/poll/${POLL_ID}/results`;
+                window.location.href = `/poll/${POLL_ID}/results`;
             }, 1000);
 
         } else {
-            // ❌ API error
+            if (data.is_expired) {
+                window.location.href = data.results_link;
+                return;
+            }
             alert(data.error);
             btn.disabled = false;
             btn.innerHTML = `
@@ -101,13 +100,12 @@ function startTimer() {
     if (!timerText) return;
 
     function updateTimer() {
-        const now    = new Date();
-        const end    = new Date(END_TIME);
-        const diff   = end - now;
+        const now  = new Date();
+        const end  = new Date(END_TIME);
+        const diff = end - now;
 
         if (diff <= 0) {
             timerText.textContent = "Poll Ended";
-            // Reload page to show expired state
             setTimeout(() => location.reload(), 2000);
             return;
         }

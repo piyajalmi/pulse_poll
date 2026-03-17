@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}PulsePoll — Real-Time Polling{% endblock %}
@@ -8,69 +7,127 @@
 <!-- ── Hero Section ──────────────────────────────────── -->
 <section class="pp-hero">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-7">
+        <!-- Wrap everything in column-direction flex -->
+        <div class="d-flex flex-column align-items-center w-100">
 
-                <!-- Logo Icon -->
-                <div class="mb-4">
-                    <i class="bi bi-bar-chart-line-fill"
-                       style="font-size:3rem; color:#4f46e5;"></i>
-                </div>
+            <!-- 1. Hero Content Row -->
+            <div class="row justify-content-center w-100">
+                <div class="col-lg-7">
 
-                <!-- Heading -->
-                <h1 class="mb-3">Real-Time Polling</h1>
-                <p class="mb-5">
-                    Instant polls. Anonymous voting. Live results.
-                </p>
+                    <!-- Icon -->
+                    <div class="mb-4">
+                        <i class="bi bi-bar-chart-line-fill"
+                           style="font-size:3rem;"></i>
+                    </div>
 
-                <!-- CTA Buttons -->
-                <div class="d-flex gap-3 justify-content-center flex-wrap">
-                    <a href="/create" class="btn btn-pp-primary btn-lg">
-                        <i class="bi bi-plus-circle me-2"></i>Create Poll
-                    </a>
-                    <a href="#join" class="btn btn-pp-outline btn-lg">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Join Poll
-                    </a>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ── Join Poll Section ──────────────────────── -->
-        <div class="row justify-content-center mt-5" id="join">
-            <div class="col-lg-5">
-                <div class="pp-card">
-                    <h5 class="fw-700 mb-3 text-center"
-                        style="color:#1e1b4b; font-weight:700;">
-                        <i class="bi bi-link-45deg me-2"
-                           style="color:#4f46e5;"></i>
-                        Join a Poll
-                    </h5>
-                    <p class="text-muted text-center small mb-3">
-                        Have a poll link? Enter the Poll ID below.
+                    <!-- Tagline -->
+                    <p class="pp-tagline mb-2">
+                        <i class="bi bi-lightning-charge-fill me-1"></i>
+                        Real-Time · Anonymous · Secure
                     </p>
-                    <div class="input-group">
-                        <input
-                            type="text"
-                            id="pollIdInput"
-                            class="form-control"
-                            placeholder="Enter Poll ID e.g. aB3xYz12"
-                            style="border-radius: 50px 0 0 50px; border-color:#818cf8;">
-                        <button
-                            class="btn btn-pp-primary"
-                            style="border-radius: 0 50px 50px 0;"
-                            onclick="joinPoll()">
-                            Go
-                        </button>
+
+                    <!-- Heading -->
+                    <h1 class="mb-3">Real-Time Polling</h1>
+
+                    <!-- Subtext -->
+                    <p class="mb-4">
+                        Instant polls. Anonymous voting. Live results.
+                    </p>
+
+                    <!-- Feature Pills -->
+                    <div class="d-flex gap-2 justify-content-center
+                                flex-wrap mb-5">
+                        <span class="pp-pill">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Anonymous
+                        </span>
+                        <span class="pp-pill">
+                            <i class="bi bi-graph-up me-1"></i>
+                            Live Results
+                        </span>
+                        <span class="pp-pill">
+                            <i class="bi bi-clock me-1"></i>
+                            Time-bound
+                        </span>
+                        <span class="pp-pill">
+                            <i class="bi bi-lock me-1"></i>
+                            Secure
+                        </span>
                     </div>
-                    <div id="joinError"
-                         class="text-danger small mt-2 text-center d-none">
-                        Please enter a valid Poll ID.
+
+                    <!-- CTA Buttons -->
+                    <div class="d-flex gap-3 justify-content-center
+                                flex-wrap">
+                        {% if session.get('user_id') %}
+                            <a href="/create"
+                               class="btn btn-pp-primary btn-lg">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Create Poll
+                            </a>
+                        {% else %}
+                            <a href="/signup"
+                               class="btn btn-pp-primary btn-lg">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Sign Up to Create Poll
+                            </a>
+                        {% endif %}
+                        <a href="#join"
+                           class="btn btn-pp-outline btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Join Poll
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            <!-- End Hero Content Row -->
+
+            <!-- 2. Join Poll Section -->
+            <div class="row justify-content-center mt-5 w-100"
+                 id="join">
+                <div class="col-lg-5">
+                    <div class="pp-card">
+
+                        <h5 class="mb-3 text-center"
+                            style="font-weight:700;">
+                            <i class="bi bi-link-45deg me-2"
+                               style="color:#a5b4fc;"></i>
+                            Join a Poll
+                        </h5>
+
+                        <p class="text-center small mb-3">
+                            Have a poll link? Enter the Poll ID below.
+                        </p>
+
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                id="pollIdInput"
+                                class="form-control"
+                                placeholder="Enter Poll ID e.g. aB3xYz12"
+                                style="border-radius: 50px 0 0 50px;">
+                            <button
+                                class="btn btn-pp-primary"
+                                style="border-radius: 0 50px 50px 0;"
+                                onclick="joinPoll()">
+                                Go
+                            </button>
+                        </div>
+
+                        <div id="joinError"
+                             class="text-warning small mt-2
+                                    text-center d-none">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Please enter a valid Poll ID.
+                        </div>
+
                     </div>
                 </div>
             </div>
-        </div>
+            <!-- End Join Poll Section -->
 
+        </div>
+        <!-- End Column Wrapper -->
     </div>
 </section>
 
@@ -79,7 +136,8 @@
 {% block extra_js %}
 <script>
     function joinPoll() {
-        const pollId = document.getElementById("pollIdInput").value.trim();
+        const pollId = document.getElementById("pollIdInput")
+                               .value.trim();
         const errorDiv = document.getElementById("joinError");
 
         if (!pollId) {
@@ -93,7 +151,7 @@
 
     // Allow pressing Enter key to join
     document.getElementById("pollIdInput")
-        .addEventListener("keypress", function(e) {
+        .addEventListener("keypress", function (e) {
             if (e.key === "Enter") joinPoll();
         });
 </script>

@@ -1,20 +1,57 @@
-
-// ── Chart instance (kept global for updates) ────────────
+// ── Chart instance ──────────────────────────────────────
 let resultsChart = null;
-let pollingInterval = null;
+let socket       = null;
 
 // ── Initialize on page load ─────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
+
+    // Always fetch results once on load
     fetchResults();
 
-    // Start live polling if poll is still active
+    // Only connect WebSocket if poll is still active
     if (!IS_EXPIRED) {
-        pollingInterval = setInterval(fetchResults, 3000);
+        initWebSocket();
         startTimer();
     }
 });
 
-// ── Fetch results from API ──────────────────────────────
+// ── Initialize WebSocket connection ─────────────────────
+function initWebSocket() {
+
+    // Connect to the server
+    socket = io();
+
+    // ── When connected → join this poll's room ──────────
+    socket.on("connect", function () {
+        console.log("WebSocket connected!");
+        socket.emit("join_poll", { poll_id: POLL_ID });
+    });
+
+    // ── When server emits vote_update → update UI ───────
+    socket.on("vote_update", function (data) {
+        console.log("Live update received!", data);
+
+        if (data.poll_id === POLL_ID) {
+            updateChart(data.results);
+            updateBreakdown(data.results);
+            updateTotalVotes(data.total_votes);
+        }
+    });
+
+    // ── Handle disconnection ─────────────────────────────
+    socket.on("disconnect", function () {
+        console.log("WebSocket disconnected.");
+    });
+
+    // ── Leave room when user leaves page ─────────────────
+    window.addEventListener("beforeunload", function () {
+        if (socket) {
+            socket.emit("leave_poll", { poll_id: POLL_ID });
+        }
+    });
+}
+
+// ── Fetch initial results from API ──────────────────────
 async function fetchResults() {
     try {
         const response = await fetch(
@@ -23,41 +60,32 @@ async function fetchResults() {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("Error fetching results:", data.error);
+            console.error("Error:", data.error);
             return;
         }
 
-        // Show results content, hide loader
+        // Show results, hide loader
         document.getElementById("loadingState")
                 .classList.add("d-none");
         document.getElementById("resultsContent")
                 .classList.remove("d-none");
 
-        // Update all UI components
         updateChart(data.results);
         updateBreakdown(data.results);
         updateTotalVotes(data.total_votes);
-
-        // If poll just expired, stop polling & reload
-        if (data.is_expired && pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-            setTimeout(() => location.reload(), 2000);
-        }
 
     } catch (error) {
         console.error("Network error:", error);
     }
 }
 
-// ── Create or Update Chart.js bar chart ─────────────────
+// ── Create or update Chart.js ────────────────────────────
 function updateChart(results) {
     const labels     = results.map(r => r.option);
     const voteCounts = results.map(r => r.votes);
     const colors     = generateColors(results.length);
 
     if (!resultsChart) {
-        // ── Create chart for first time ────────────────
         const ctx = document.getElementById("resultsChart")
                              .getContext("2d");
         resultsChart = new Chart(ctx, {
@@ -80,10 +108,9 @@ function updateChart(results) {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
-                                const result =
-                                    results[context.dataIndex];
-                                return ` ${result.votes} votes (${result.percentage}%)`;
+                            label: function (context) {
+                                const r = results[context.dataIndex];
+                                return ` ${r.votes} votes (${r.percentage}%)`;
                             }
                         }
                     }
@@ -91,31 +118,24 @@ function updateChart(results) {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            color: "#64748b"
-                        },
-                        grid: {
-                            color: "#f1f5f9"
-                        }
+                        ticks: { stepSize: 1, color: "#64748b" },
+                        grid:  { color: "#f1f5f9" }
                     },
                     x: {
                         ticks: { color: "#1e1b4b",
                                  font: { weight: "600" } },
-                        grid: { display: false }
+                        grid:  { display: false }
                     }
                 }
             }
         });
-
     } else {
-        // ── Update existing chart data ─────────────────
         resultsChart.data.datasets[0].data = voteCounts;
         resultsChart.update("active");
     }
 }
 
-// ── Update option breakdown bars ────────────────────────
+// ── Update breakdown bars ────────────────────────────────
 function updateBreakdown(results) {
     const container = document.getElementById("optionBreakdown");
     container.innerHTML = "";
@@ -139,12 +159,12 @@ function updateBreakdown(results) {
     });
 }
 
-// ── Update total votes display ───────────────────────────
+// ── Update total votes ───────────────────────────────────
 function updateTotalVotes(total) {
     document.getElementById("totalVotes").textContent = total;
 }
 
-// ── Generate purple-toned colors for chart bars ──────────
+// ── Generate colors ──────────────────────────────────────
 function generateColors(count) {
     const baseColors = [
         { bg: "rgba(79,70,229,0.8)",   border: "#4f46e5" },
@@ -153,52 +173,40 @@ function generateColors(count) {
         { bg: "rgba(196,181,253,0.8)", border: "#c4b5fd" },
         { bg: "rgba(99,102,241,0.8)",  border: "#6366f1" },
     ];
-
-    const bg     = [];
-    const border = [];
-
+    const bg = [], border = [];
     for (let i = 0; i < count; i++) {
-        const color = baseColors[i % baseColors.length];
-        bg.push(color.bg);
-        border.push(color.border);
+        bg.push(baseColors[i % baseColors.length].bg);
+        border.push(baseColors[i % baseColors.length].border);
     }
-
     return { bg, border };
 }
 
-// ── Countdown Timer ─────────────────────────────────────
+// ── Countdown Timer ──────────────────────────────────────
 function startTimer() {
     const timerText = document.getElementById("timerText");
     if (!timerText) return;
 
     function updateTimer() {
-        const now  = new Date();
-        const end  = new Date(END_TIME);
-        const diff = end - now;
-
+        const diff = new Date(END_TIME) - new Date();
         if (diff <= 0) {
             timerText.textContent = "Poll Ended";
+            if (socket) socket.disconnect();
+            setTimeout(() => location.reload(), 2000);
             return;
         }
-
-        const hours   = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor(
-            (diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
         timerText.textContent =
-            `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+            `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
     }
 
-    function pad(n) {
-        return String(n).padStart(2, "0");
-    }
-
+    function pad(n) { return String(n).padStart(2, "0"); }
     updateTimer();
     setInterval(updateTimer, 1000);
 }
 
-// ── Copy share link ─────────────────────────────────────
+// ── Copy link ────────────────────────────────────────────
 function copyLink() {
     const link = document.getElementById("shareLink").value;
     navigator.clipboard.writeText(link).then(() => {

@@ -41,7 +41,7 @@ def hash_ip(ip_address):
     '''hash IP address using SHA-256'''
     return hashlib.sha256(ip_address.encode("utf-8")).hexdigest()
 
-#unique poll id generator
-def generate_poll_id():
-    '''generate a unique 8 character  poll ID'''
-    return secrets.token_urlsafe(6)
+# #unique poll id generator
+# def generate_poll_id():
+#     '''generate a unique 8 character  poll ID'''
+#     return secrets.token_urlsafe(6)

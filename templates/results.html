@@ -1,10 +1,10 @@
-
 {% extends "base.html" %}
 
 {% block title %}Results — {{ poll.question }}{% endblock %}
 
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,6 @@
         <div class="row justify-content-center">
             <div class="col-lg-7 col-md-9">
 
-                <!-- ── Status Banner ─────────────────────── -->
                 {% if is_expired %}
                 <div class="pp-banner pp-banner-ended mb-4">
                     <i class="bi bi-lock-fill me-2"></i>
@@ -23,14 +22,12 @@
                 {% else %}
                 <div class="pp-banner pp-banner-live mb-4">
                     <i class="bi bi-circle-fill me-2 pp-live-dot"></i>
-                    Live results — updating every 3 seconds
+                    Live results⚡
                 </div>
                 {% endif %}
 
-                <!-- ── Results Card ──────────────────────── -->
                 <div class="pp-card">
 
-                    <!-- Poll Question -->
                     <div class="pp-results-header mb-4">
                         <h3 class="pp-question">
                             {{ poll.question }}
@@ -42,49 +39,35 @@
                         </div>
                         {% else %}
                         <div class="pp-timer"
-                             style="background:#f1f5f9;
-                                    color:#94a3b8;">
+                             style="background:#f1f5f9; color:#94a3b8;">
                             <i class="bi bi-lock me-1"></i>
                             Poll Closed
                         </div>
                         {% endif %}
                     </div>
 
-                    <!-- Loading State -->
                     <div id="loadingState" class="text-center py-4">
                         <div class="spinner-border"
                              style="color:#4f46e5;"></div>
-                        <p class="text-muted mt-2">
-                            Loading results...
-                        </p>
+                        <p class="text-muted mt-2">Loading results...</p>
                     </div>
 
-                    <!-- Results Content (hidden until loaded) -->
                     <div id="resultsContent" class="d-none">
 
-                        <!-- Bar Chart -->
                         <div class="pp-chart-container mb-4">
                             <canvas id="resultsChart"></canvas>
                         </div>
 
-                        <!-- Option Breakdown -->
-                        <div id="optionBreakdown" class="mb-4">
-                            <!-- Injected by JS -->
-                        </div>
+                        <div id="optionBreakdown" class="mb-4"></div>
 
-                        <!-- Total Votes -->
                         <div class="pp-total-votes text-center">
-                            <span class="pp-total-label">
-                                Total Votes:
-                            </span>
+                            <span class="pp-total-label">Total Votes:</span>
                             <span class="pp-total-number"
                                   id="totalVotes">0</span>
                         </div>
 
                     </div>
-                    <!-- end resultsContent -->
 
-                    <!-- Action Buttons -->
                     <div class="d-flex gap-3 justify-content-center
                                 mt-4 flex-wrap">
                         <a href="/poll/{{ poll.id }}"
@@ -92,18 +75,14 @@
                             <i class="bi bi-arrow-left me-2"></i>
                             Back to Poll
                         </a>
-                        <a href="/"
-                           class="btn btn-pp-primary">
+                        <a href="/" class="btn btn-pp-primary">
                             <i class="bi bi-plus-circle me-2"></i>
                             Create New Poll
                         </a>
                     </div>
 
-                    <!-- Share Results Link -->
                     <div class="pp-share-box mt-4">
-                        <small class="text-muted">
-                            Share results:
-                        </small>
+                        <small class="text-muted">Share results:</small>
                         <div class="input-group mt-1">
                             <input type="text"
                                    class="form-control pp-input"
@@ -123,7 +102,6 @@
                     </div>
 
                 </div>
-                <!-- end pp-card -->
 
             </div>
         </div>

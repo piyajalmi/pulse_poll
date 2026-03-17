@@ -43,9 +43,11 @@
                 <span class="mp-badge
                     {% if poll.status == 'Active' %}
                         mp-badge-active
-                    {% else %}
-                        mp-badge-expired
-                    {% endif %}">
+                    {% elif poll.status == 'Not Started' %}
+        mp-badge-not-started
+    {% else %}
+        mp-badge-expired
+    {% endif %}">
                     <i class="bi bi-circle-fill me-1"
                        style="font-size:0.4rem;"></i>
                     {{ poll.status }}
@@ -77,7 +79,7 @@
             <!-- Actions -->
             <div class="mp-card-actions">
 
-                {% if poll.status == 'Active' %}
+                {% if poll.status == 'Active'  or poll.status == 'Not Started'%}
                 <!-- Delete only for active polls -->
                 <button class="mp-btn-delete"
                         onclick="confirmDelete({{ poll.id }}, '{{ poll.question[:30] }}')">

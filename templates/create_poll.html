@@ -1,100 +1,126 @@
-
-{% extends "base.html" %}
+{% extends "dashboard_base.html" %}
 
 {% block title %}Create Poll — PulsePoll{% endblock %}
 
 {% block content %}
 
-<section class="pp-create-section py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6 col-md-8">
+<!-- ── Breadcrumb ─────────────────────────────────────── -->
+<nav class="db-breadcrumb mb-4">
+    <a href="/dashboard" class="db-breadcrumb-link">
+        <i class="bi bi-grid-1x2-fill me-1"></i>
+        Dashboard
+    </a>
+    <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
+    <span class="db-breadcrumb-current">Create Poll</span>
+</nav>
 
-                <!-- ── Page Header ──────────────────── -->
-                <div class="text-center mb-4">
-                    <h2 class="pp-page-title">
-                        <i class="bi bi-plus-circle-fill me-2"
-                           style="color:#4f46e5;"></i>
-                        Create a New Poll
-                    </h2>
-                    <p class="text-muted">
-                        Fill in the details below to launch your poll.
-                    </p>
+<!-- ── Page Header ────────────────────────────────────── -->
+<div class="db-page-header mb-4">
+    <h4 class="db-page-title">
+        <i class="bi bi-plus-circle-fill me-2"
+           style="color:#4f46e5;"></i>
+        Create a New Poll
+    </h4>
+    <p class="db-page-subtitle">
+        Fill in the details below to launch your poll.
+    </p>
+</div>
+
+<!-- ── Poll Creation Card ─────────────────────────────── -->
+<div class="row">
+    <div class="col-lg-7 col-md-9">
+        <div class="pp-card">
+
+            <!-- Poll Question -->
+            <div class="mb-4">
+                <label class="pp-label">Poll Question</label>
+                <input type="text"
+                       id="pollQuestion"
+                       class="form-control pp-input"
+                       placeholder="What would you like to ask?"
+                       maxlength="200">
+                <div class="invalid-feedback" id="questionError">
+                    Please enter a poll question.
                 </div>
-
-                <!-- ── Poll Creation Card ───────────── -->
-                <div class="pp-card">
-
-                    <!-- Poll Question -->
-                    <div class="mb-4">
-                        <label class="pp-label">
-                            Poll Question
-                        </label>
-                        <input
-                            type="text"
-                            id="pollQuestion"
-                            class="form-control pp-input"
-                            placeholder="What would you like to ask?"
-                            maxlength="200">
-                        <div class="invalid-feedback" id="questionError">
-                            Please enter a poll question.
-                        </div>
-                    </div>
-
-                    <!-- Poll Options -->
-                    <div class="mb-4">
-                        <label class="pp-label">
-                            Options
-                        </label>
-                        <div id="optionsContainer">
-                            <!-- Options injected by JS -->
-                        </div>
-                        <button
-                            class="btn btn-pp-add-option mt-2"
-                            onclick="addOption()">
-                            <i class="bi bi-plus-circle me-1"></i>
-                            Add Option
-                        </button>
-                        <div class="text-danger small mt-1 d-none"
-                             id="optionsError">
-                            Please add at least 2 options.
-                        </div>
-                    </div>
-
-                    <!-- Poll End Time -->
-                    <div class="mb-4">
-                        <label class="pp-label">
-                            Poll End Date & Time
-                        </label>
-                        <input
-                            type="datetime-local"
-                            id="pollEndTime"
-                            class="form-control pp-input">
-                        <div class="text-danger small mt-1 d-none"
-                             id="timeError">
-                            Please select a future date and time.
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button
-                        class="btn btn-pp-primary w-100 mt-2"
-                        id="createPollBtn"
-                        onclick="submitPoll()">
-                        <i class="bi bi-send-fill me-2"></i>
-                        Create Poll
-                    </button>
-
-                    <!-- Error / Success Messages -->
-                    <div id="formMessage" class="mt-3 d-none"></div>
-
-                </div>
-                <!-- end pp-card -->
-
             </div>
+
+            <!-- Poll Options -->
+            <div class="mb-4">
+                <label class="pp-label">Options</label>
+                <div id="optionsContainer"></div>
+                <button class="btn btn-pp-add-option mt-2"
+                        type="button"
+                        onclick="addOption()">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Option
+                </button>
+                <div class="text-danger small mt-1 d-none"
+                     id="optionsError">
+                    Please add at least 2 options.
+                </div>
+            </div>
+
+            <!-- Poll Start Date & Time -->
+<div class="mb-4">
+    <label class="pp-label">
+        Poll Start Date & Time
+    </label>
+    <div class="row g-2">
+        <div class="col-7">
+            <input type="date"
+                   id="pollStartDate"
+                   class="form-control pp-input">
+        </div>
+        <div class="col-5">
+            <input type="time"
+                   id="pollStartTime"
+                   class="form-control pp-input">
         </div>
     </div>
-</section>
+    <div class="text-danger small mt-1 d-none"
+         id="startError">
+        Please select a valid start date and time.
+    </div>
+</div>
+
+<!-- Poll End Date & Time -->
+<div class="mb-4">
+    <label class="pp-label">
+        Poll End Date & Time
+    </label>
+    <div class="row g-2">
+        <div class="col-7">
+            <input type="date"
+                   id="pollEndDate"
+                   class="form-control pp-input">
+        </div>
+        <div class="col-5">
+            <input type="time"
+                   id="pollEndTime"
+                   class="form-control pp-input">
+        </div>
+    </div>
+    <div class="text-danger small mt-1 d-none"
+         id="timeError">
+        Please select a valid end date and time.
+    </div>
+</div>
+
+            <!-- Submit Button -->
+            <button class="btn btn-pp-primary w-100 mt-2"
+                    type="button"
+                    id="createPollBtn"
+                    onclick="submitPoll()">
+                <i class="bi bi-send-fill me-2"></i>
+                Create Poll
+            </button>
+
+            <!-- Message -->
+            <div id="formMessage" class="mt-3 d-none"></div>
+
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 

@@ -7,10 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // ── Set minimum date/time to now ────────────────────────
 function setMinDateTime() {
-    const now = new Date();
-    // Format: YYYY-MM-DDTHH:MM
-    const formatted = now.toISOString().slice(0, 16);
-    document.getElementById("pollEndTime").min = formatted;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("pollStartDate").min = today;
+    document.getElementById("pollEndDate").min = today;
 }
 
 // ── Add a new option input row ──────────────────────────
@@ -67,12 +66,12 @@ function getOptions() {
 }
 
 // ── Validate the form ───────────────────────────────────
-function validateForm(question, options, endTime) {
+
+function validateForm(question, options, startDateTime, endDateTime) {
     let isValid = true;
 
     // Validate question
     const questionInput = document.getElementById("pollQuestion");
-    const questionError = document.getElementById("questionError");
     if (!question) {
         questionInput.classList.add("is-invalid");
         isValid = false;
@@ -89,9 +88,18 @@ function validateForm(question, options, endTime) {
         optionsError.classList.add("d-none");
     }
 
+    // Validate start time
+    const startError = document.getElementById("startError");
+    if (!startDateTime) {
+        startError.classList.remove("d-none");
+        isValid = false;
+    } else {
+        startError.classList.add("d-none");
+    }
+
     // Validate end time
     const timeError = document.getElementById("timeError");
-    if (!endTime || new Date(endTime) <= new Date()) {
+    if (!endDateTime || new Date(endDateTime) <= new Date(startDateTime)) {
         timeError.classList.remove("d-none");
         isValid = false;
     } else {
@@ -100,54 +108,65 @@ function validateForm(question, options, endTime) {
 
     return isValid;
 }
-
 // ── Submit the poll to the API ──────────────────────────
 async function submitPoll() {
-    const question = document.getElementById("pollQuestion")
-                              .value.trim();
-    const options  = getOptions();
-    const endTime  = document.getElementById("pollEndTime").value;
-    const btn      = document.getElementById("createPollBtn");
-    const message  = document.getElementById("formMessage");
+    const question   = document.getElementById("pollQuestion")
+                                .value.trim();
+    const options    = getOptions();
 
-    // Run validation first
-    if (!validateForm(question, options, endTime)) return;
+    // ── Combine date + time into one string ───────────────
+    const startDate  = document.getElementById("pollStartDate").value;
+    const startTime  = document.getElementById("pollStartTime").value;
+    const endDate    = document.getElementById("pollEndDate").value;
+    const endTime    = document.getElementById("pollEndTime").value;
 
-    // Disable button to prevent double submission
+    // Format: "2026-03-16T10:00" ← what Flask expects
+    const startDateTime = (startDate && startTime)
+                          ? `${startDate}T${startTime}`
+                          : "";
+    const endDateTime   = (endDate && endTime)
+                          ? `${endDate}T${endTime}`
+                          : "";
+
+    const btn     = document.getElementById("createPollBtn");
+    const message = document.getElementById("formMessage");
+
+    // Run validation
+    if (!validateForm(question, options,
+                      startDateTime, endDateTime)) return;
+
+    // Disable button
     btn.disabled = true;
     btn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2"></span>
-        Creating...`;
+        <span class="spinner-border spinner-border-sm me-2">
+        </span>Creating...`;
 
     try {
-        // Send POST request to our Flask API
         const response = await fetch("/poll/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                question: question,
-                options:  options,
-                end_time: endTime
+                question:   question,
+                options:    options,
+                start_time: startDateTime,   // ← sending start
+                end_time:   endDateTime      // ← sending end
             })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // ✅ Success — show message then redirect
             message.className = "mt-3 pp-success";
             message.innerHTML = `
                 <i class="bi bi-check-circle-fill me-2"></i>
                 Poll created! Redirecting...`;
             message.classList.remove("d-none");
 
-            // Redirect to the vote page after 1.5 seconds
             setTimeout(() => {
-                window.location.href = `/poll/${data.poll_id}`;
+                window.location.href = `/dashboard/polls`;
             }, 1500);
 
         } else {
-            // ❌ API returned an error
             message.className = "mt-3 pp-error";
             message.innerHTML = `
                 <i class="bi bi-exclamation-circle-fill me-2"></i>
@@ -155,11 +174,11 @@ async function submitPoll() {
             message.classList.remove("d-none");
             btn.disabled = false;
             btn.innerHTML = `
-                <i class="bi bi-send-fill me-2"></i>Create Poll`;
+                <i class="bi bi-send-fill me-2"></i>
+                Create Poll`;
         }
 
     } catch (error) {
-        // ❌ Network error
         message.className = "mt-3 pp-error";
         message.innerHTML = `
             <i class="bi bi-wifi-off me-2"></i>
@@ -167,6 +186,7 @@ async function submitPoll() {
         message.classList.remove("d-none");
         btn.disabled = false;
         btn.innerHTML = `
-            <i class="bi bi-send-fill me-2"></i>Create Poll`;
+            <i class="bi bi-send-fill me-2"></i>
+            Create Poll`;
     }
 }

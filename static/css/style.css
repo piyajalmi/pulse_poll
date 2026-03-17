@@ -1,8 +1,9 @@
-
 /* ── Global ───────────────────────────────────────────── */
 * {
     font-family: 'Inter', sans-serif;
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
@@ -18,9 +19,14 @@ main {
 
 /* ── Navbar ───────────────────────────────────────────── */
 .pp-navbar {
-    background-color: #ffffff;
-    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.1);
-    padding: 14px 0;
+    background-color: rgba(20, 15, 60, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .pp-brand {
@@ -30,11 +36,11 @@ main {
 }
 
 .pp-brand .pulse {
-    color: #4f46e5;
+    color: #ffffff;
 }
 
 .pp-brand .poll {
-    color: #818cf8;
+    color: #a5b4fc;
 }
 
 /* ── Buttons ──────────────────────────────────────────── */
@@ -58,8 +64,8 @@ main {
 
 .btn-pp-outline {
     background: transparent;
-    color: #4f46e5;
-    border: 2px solid #4f46e5;
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.6);
     border-radius: 50px;
     padding: 12px 32px;
     font-weight: 600;
@@ -68,8 +74,9 @@ main {
 }
 
 .btn-pp-outline:hover {
-    background: #4f46e5;
-    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: #ffffff;
     transform: translateY(-2px);
 }
 
@@ -92,39 +99,117 @@ main {
 
 /* ── Hero Section (Landing Page) ─────────────────────── */
 .pp-hero {
-    min-height: 88vh;
+    min-height: 92vh;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: linear-gradient(160deg, #f0f4ff 0%, #e8eaff 100%);
+    background-image: url('/static/images/hero-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     position: relative;
     overflow: hidden;
 }
 
+/* Dark overlay on top of background image */
 .pp-hero::before {
     content: "";
     position: absolute;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(129,140,248,0.15) 0%, transparent 70%);
-    top: -100px;
-    right: -100px;
-    border-radius: 50%;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(20, 15, 80, 0.60) 0%,
+        rgba(60, 40, 140, 0.40) 100%
+    );
+    z-index: 0;
 }
 
+/* All hero content must sit above the overlay */
+.pp-hero .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Hero icon */
+.pp-hero .bi-bar-chart-line-fill {
+    color: #a5b4fc !important;
+    filter: drop-shadow(0 0 12px rgba(165, 180, 252, 0.5));
+}
+
+/* Hero heading */
 .pp-hero h1 {
     font-size: 3.5rem;
     font-weight: 800;
-    color: #1e1b4b;
+    color: #ffffff;
     line-height: 1.2;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
 }
 
+/* Hero subtext */
 .pp-hero p {
     font-size: 1.2rem;
-    color: #6366f1;
+    color: #c7d2fe;
     font-weight: 500;
     margin-bottom: 2.5rem;
+}
+
+/* ── Hero Join Card (glassmorphism) ───────────────────── */
+.pp-hero .pp-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.pp-hero .pp-card h5 {
+    color: #ffffff !important;
+}
+
+.pp-hero .pp-card p {
+    color: #c7d2fe !important;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.pp-hero .pp-card .form-control {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff;
+}
+
+.pp-hero .pp-card .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.pp-hero .pp-card .form-control:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #a5b4fc !important;
+    color: #ffffff;
+    box-shadow: none;
+    outline: none;
+}
+
+/* ── Feature Pills ────────────────────────────────────── */
+.pp-pill {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+/* ── Tagline ──────────────────────────────────────────── */
+.pp-tagline {
+    color: #a5b4fc;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
 }
 
 /* ── Responsive ───────────────────────────────────────── */
@@ -133,6 +218,7 @@ main {
         font-size: 2.2rem;
     }
 }
+
 /* ── Create Poll Page ─────────────────────────────────── */
 .pp-create-section {
     min-height: 90vh;
@@ -419,4 +505,98 @@ main {
     font-size: 1.5rem;
     font-weight: 800;
     color: #4f46e5;
+}
+
+/* ── Auth Pages ───────────────────────────────────────── */
+.auth-page * {
+    margin: 0;
+    padding: 0;
+}
+
+.auth-page body {
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center;
+    background-image: linear-gradient(
+        to bottom,
+        #dcdcdc 50%,
+        #e9e9e9 30%
+    );
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.auth-page main {
+    background-color: #e9e9e9;
+    width: 500px;
+    min-height: 400px;
+    margin-top: 10%;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 30px;
+    box-shadow: 0 30px 50px;
+    box-sizing: border-box;
+    padding: 30px;
+}
+
+.auth-page main form {
+    align-items: center;
+    justify-content: space-between;
+}
+
+.auth-page main form input {
+    width: 90%;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 20px;
+    font-weight: bold;
+    box-shadow: 2px 3px 4px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+}
+
+.auth-page main input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+    outline: none;
+}
+
+.auth-page main form button {
+    width: 300px;
+    height: 60px;
+    border-radius: 15px;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+    background-color: #4f46e5;
+    color: white;
+    margin-bottom: 30px;
+    border: none;
+}
+
+.auth-page main p {
+    margin-top: 30px;
+    font-size: 25px;
+    font-weight: bold;
+    color: black;
+    text-align: center;
+    align-items: center;
+}
+
+.auth-page main a {
+    color: #4f46e5;
+}
+
+.auth-page main h1,
+.auth-page main h2 {
+    text-align: center;
+    margin-top: 20%;
 }

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+        <link rel="stylesheet" type="text/css" href="\static\css\style.css">
+
+</head>
+<body class = "auth-page">
+    <main>
+        <form method='post' action='/add_user'>
+            <input type = text name="fname" placeholder="Enter First Name" required><br>
+            <input type = text name="lname" placeholder="Enter Last Name" required><br>
+            <input type = email name="email" placeholder="Enter Email" required><br>
+            <input type = password name="password" placeholder="Enter Password" required><br>
+            <button type="submit" value="signUp">Creat Account</button>
+        </form>
+        <p>Already have an account? <br><a href="{{ url_for('login') }}">Login</a></p>
+    </main>
+</body>
+</html>

@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify, session
 from flask_socketio import join_room, leave_room
 from datetime import datetime
@@ -28,15 +29,28 @@ def submit_vote(poll_id):
         conn.close()
         return jsonify({"error": "Poll not found."}), 404
 
-    # ── Step 2: Check expiry ──────────────────────────────
-    end_dt = datetime.fromisoformat(poll["end_time"])
+   # ── Step 2a: Check if poll has started ──────────────────
+    start_time_raw = poll["start_time"]
+    if start_time_raw:
+        start_time_raw = start_time_raw.replace("T", " ")[:19]  # ← normalize
+        start_dt = datetime.fromisoformat(start_time_raw)
+        if datetime.now() < start_dt:
+            conn.close()
+            return jsonify({
+            "error": "This poll hasn't started yet.",
+            "not_started": True
+            }), 400
+
+# ── Step 2: Check expiry ─────────────────────────────────
+    end_time_raw = poll["end_time"].replace("T", " ")[:19]      # ← normalize
+    end_dt = datetime.fromisoformat(end_time_raw)
     if datetime.now() > end_dt:
         conn.close()
         return jsonify({
-            "error":        "This poll has expired.",
-            "is_expired":   True,
-            "results_link": f"/poll/{poll_id}/results"
-        }), 400
+        "error":        "This poll has expired.",
+        "is_expired":   True,
+        "results_link": f"/poll/{poll_id}/results"
+    }), 400
 
     # ── Step 3: Check duplicate via session ───────────────
     voted_key = f"voted_{poll_id}"

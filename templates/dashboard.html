@@ -112,58 +112,65 @@
 </div>
 
 {% if recent_polls %}
-<div class="db-polls-table">
-    <div class="db-polls-table-header">
-        <span>Question</span>
-        <span>Status</span>
-        <span>Votes</span>
-        <span>Actions</span>
-    </div>
+<div class="db-polls-table-header"
+     style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+    <span>Question</span>
+    <span>Created By</span>
+    <span>Status</span>
+    <span>Votes</span>
+    <span>Actions</span>
+</div>
 
-    {% for poll in recent_polls %}
-    <div class="db-polls-table-row">
+   {% for poll in recent_polls %}
+<div class="db-polls-table-row"
+     style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
 
-        <!-- Question -->
-        <span class="db-poll-question">
-            {{ poll.question }}
-        </span>
+    <span class="db-poll-question">
+        {{ poll.question }}
+    </span>
 
-        <!-- Status Badge -->
-        <span class="db-poll-badge
-              {% if poll.status == 'Active' %}
-                  db-badge-active
-              {% else %}
-                  db-badge-ended
-              {% endif %}">
-            {% if poll.status == 'Active' %}
-                <i class="bi bi-circle-fill me-1"
-                   style="font-size:0.5rem;"></i>
-            {% endif %}
-            {{ poll.status }}
-        </span>
+    <!-- Creator name -->
+    <span style="font-size:0.85rem; color:#64748b;
+                 font-weight:500;">
+        <i class="bi bi-person me-1"></i>
+        {{ poll.first_name }} {{ poll.last_name }}
+    </span>
 
-        <!-- Vote Count -->
-        <span class="db-poll-votes">
-            <i class="bi bi-hand-index-thumb me-1"></i>
-            {{ poll.vote_count }}
-        </span>
+    <span class="db-poll-badge
+          {% if poll.status == 'Active' %}
+              db-badge-active
+          {% elif poll.status == 'Not Started' %}
+        db-badge-not-started
+    {% else %}
+        db-badge-ended
+    {% endif %}">
+        {% if poll.status == 'Active' %}
+            <i class="bi bi-circle-fill me-1"
+               style="font-size:0.5rem;"></i>
+        {% endif %}
+        {{ poll.status }}
+    </span>
 
-        <!-- Actions -->
-        <span class="db-poll-actions">
-            <a href="/poll/{{ poll.id }}/results"
-               class="db-action-btn"
-               title="View Results">
-                <i class="bi bi-bar-chart-fill"></i>
-            </a>
-            <a href="/poll/{{ poll.id }}"
-               class="db-action-btn"
-               title="View Poll">
-                <i class="bi bi-eye-fill"></i>
-            </a>
-        </span>
+    <span class="db-poll-votes">
+        <i class="bi bi-hand-index-thumb me-1"></i>
+        {{ poll.vote_count }}
+    </span>
 
-    </div>
-    {% endfor %}
+    <span class="db-poll-actions">
+        <a href="/poll/{{ poll.id }}/results"
+           class="db-action-btn"
+           title="View Results">
+            <i class="bi bi-bar-chart-fill"></i>
+        </a>
+        <a href="/poll/{{ poll.id }}"
+           class="db-action-btn"
+           title="Vote">
+            <i class="bi bi-eye-fill"></i>
+        </a>
+    </span>
+
+</div>
+{% endfor %}
 
 </div>
 

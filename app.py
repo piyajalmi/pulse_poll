@@ -1,9 +1,10 @@
+# from select import poll
 import sqlite3
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from flask_socketio import SocketIO
 from config import Config
 from models import get_db_connection, init_db
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # ── Create Flask app ──────────────────────────────────────
 app = Flask(__name__)
@@ -75,19 +76,25 @@ def dashboard():
             p.id,
             p.question,
             p.end_time,
+            p.user_id,
             COUNT(v.id) as vote_count,
+            u.first_name,         
+            u.last_name,  
             CASE 
-                WHEN p.end_time > datetime('now', 'localtime') 
-                THEN 'active'
-                ELSE 'expired'
+                WHEN datetime(p.end_time) <= datetime('now', 'localtime')
+                    THEN 'Expired'
+                 WHEN datetime(p.start_time) > datetime('now', 'localtime')
+                    THEN 'Not Started'
+                ELSE 'Active'
             END as status
         FROM polls p
         LEFT JOIN votes v ON v.poll_id = p.id
-        WHERE p.user_id = ?
+        LEFT JOIN users u ON u.id = p.user_id 
+        WHERE p.status = 1
         GROUP BY p.id
         ORDER BY p.created_at DESC
         LIMIT 5
-    """, (user_id,)).fetchall()
+    """).fetchall()
                                 
     conn.close()
     # ── Calculate percentages for progress circles ────────
@@ -99,7 +106,14 @@ def dashboard():
     max_votes   = 100
     votes_pct   = min(round((total_votes / max_votes * 100)), 100)
 
-    return render_template('dashboard.html', total_polls=total_polls, active_polls=active_polls, total_votes=total_votes, active_pct=active_pct, ended_pct=ended_pct, votes_pct=votes_pct)
+    return render_template('dashboard.html', active_page  = 'dashboard',
+                       total_polls  = total_polls,
+                       active_polls = active_polls,
+                       total_votes  = total_votes,
+                       active_pct   = active_pct,
+                       ended_pct    = ended_pct,
+                       votes_pct    = votes_pct,
+                       recent_polls = recent_polls)
 
 
 @app.route('/dashboard/polls')
@@ -127,9 +141,11 @@ def my_polls():
             p.created_at,
             COUNT(v.id) as vote_count,
             CASE
-                WHEN p.end_time > datetime('now', 'localtime')
-                THEN 'Active'
-                ELSE 'Expired'
+                WHEN datetime(p.end_time) <= datetime('now', 'localtime')
+                    THEN 'Expired'
+                 WHEN datetime(p.start_time) > datetime('now', 'localtime')
+                    THEN 'Not Started'
+                ELSE 'Active'
             END as status
         FROM polls p
         LEFT JOIN votes v ON v.poll_id = p.id
@@ -145,7 +161,7 @@ def my_polls():
     total_pages = (total_count + per_page - 1) // per_page
 
     return render_template('my_polls.html',
-                           active_page = 'my_polls',
+                           active_page = 'polls',
                            polls       = polls,
                            current_page = page,
                            total_pages = total_pages)
@@ -154,7 +170,7 @@ def my_polls():
 def poll_detail(poll_id):
     #step 1 must be logged in 
     if 'user_id' not in session:
-        return redirect('login')
+        return redirect(url_for('login'))
     
     conn = get_db_connection()
 
@@ -211,9 +227,11 @@ def poll_detail(poll_id):
 
     #step 8 is poll active or expired
     from datetime import datetime
-    end_dt = datetime.fromisoformat(poll['end_time'])
-    is_expired = datetime.now() > end_dt
+    end_time_raw = poll['end_time'].replace("T", " ")[:19]  # ← normalize
+    end_dt       = datetime.fromisoformat(end_time_raw)
+    is_expired   = datetime.now() > end_dt
 
+    
     conn.close()
 
     return render_template('poll_detail.html', 
@@ -224,6 +242,28 @@ def poll_detail(poll_id):
                            logs=logs,
                            is_expired=is_expired)
  
+@app.route('/dashboard/poll/<int:poll_id>/delete', methods=['POST'])
+def delete_poll(poll_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    conn = get_db_connection()
+
+    poll = conn.execute("""
+        SELECT * FROM polls
+        WHERE id = ? AND user_id = ?
+    """, (poll_id, session['user_id'])).fetchone()
+
+    if not poll:
+        conn.close()
+        return jsonify({"error": "Poll not found"}), 404
+
+    # Soft delete
+    conn.execute("UPDATE polls SET status = 0 WHERE id = ?", (poll_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Poll deleted"}), 200
 
 @app.route('/login_validation', methods=['POST'])
 def login_validation():

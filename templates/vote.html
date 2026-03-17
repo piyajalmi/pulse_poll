@@ -11,39 +11,60 @@
 
                 <!-- ── Already Voted State ──────────────── -->
                 {% if has_voted %}
-                <div class="pp-card text-center">
-                    <i class="bi bi-check-circle-fill mb-3"
-                       style="font-size:3rem; color:#4f46e5;"></i>
-                    <h4 class="fw-bold" style="color:#1e1b4b;">
-                        You have already voted!
-                    </h4>
-                    <p class="text-muted mb-4">
-                        Your vote has been recorded. View the live results below.
-                    </p>
-                    <a href="/poll/{{ poll.id }}/results"
-                       class="btn btn-pp-primary">
-                        <i class="bi bi-bar-chart-fill me-2"></i>
-                        View Results
-                    </a>
-                </div>
+<!-- Already voted state -->
+<div class="pp-card text-center">
+    <i class="bi bi-check-circle-fill mb-3"
+       style="font-size:3rem; color:#4f46e5;"></i>
+    <h4 class="fw-bold" style="color:#1e1b4b;">
+        You have already voted!
+    </h4>
+    <p class="text-muted mb-4">
+        Your vote has been recorded.
+    </p>
+    <a href="/poll/{{ poll.id }}/results"
+       class="btn btn-pp-primary">
+        <i class="bi bi-bar-chart-fill me-2"></i>
+        View Results
+    </a>
+</div>
 
-                <!-- ── Expired State ─────────────────────── -->
-                {% elif is_expired %}
-                <div class="pp-card text-center">
-                    <i class="bi bi-clock-history mb-3"
-                       style="font-size:3rem; color:#94a3b8;"></i>
-                    <h4 class="fw-bold" style="color:#1e1b4b;">
-                        Voting has ended
-                    </h4>
-                    <p class="text-muted mb-4">
-                        This poll is now closed. View the final results below.
-                    </p>
-                    <a href="/poll/{{ poll.id }}/results"
-                       class="btn btn-pp-primary">
-                        <i class="bi bi-bar-chart-fill me-2"></i>
-                        View Final Results
-                    </a>
-                </div>
+{% elif not_started %}
+<!-- ── NOT STARTED state ── NEW ──────────────────────── -->
+<div class="pp-card text-center">
+    <i class="bi bi-hourglass-split mb-3"
+       style="font-size:3rem; color:#818cf8;"></i>
+    <h4 class="fw-bold" style="color:#1e1b4b;">
+        Poll hasn't started yet!
+    </h4>
+    <p class="text-muted mb-2">
+        This poll will open for voting at:
+    </p>
+    <div class="pp-timer mb-4">
+        <i class="bi bi-clock me-1"></i>
+        {{ poll.start_time[:16].replace('T', ' ') }}
+    </div>
+    <p class="text-muted small">
+        Come back when the poll starts to cast your vote.
+    </p>
+</div>
+
+{% elif is_expired %}
+<!-- Expired state -->
+<div class="pp-card text-center">
+    <i class="bi bi-clock-history mb-3"
+       style="font-size:3rem; color:#94a3b8;"></i>
+    <h4 class="fw-bold" style="color:#1e1b4b;">
+        Voting has ended
+    </h4>
+    <p class="text-muted mb-4">
+        This poll is now closed.
+    </p>
+    <a href="/poll/{{ poll.id }}/results"
+       class="btn btn-pp-primary">
+        <i class="bi bi-bar-chart-fill me-2"></i>
+        View Final Results
+    </a>
+</div>
 
                 <!-- ── Active Voting State ───────────────── -->
                 {% else %}

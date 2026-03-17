@@ -1,0 +1,252 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Poll #{{ poll.id }} — PulsePoll{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Breadcrumb ─────────────────────────────────────── -->
+<nav class="db-breadcrumb mb-4">
+    <a href="/dashboard" class="db-breadcrumb-link">
+        <i class="bi bi-grid-1x2-fill me-1"></i>
+        Dashboard
+    </a>
+    <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
+    <a href="/dashboard/polls" class="db-breadcrumb-link">
+        Polls
+    </a>
+    <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
+    <span class="db-breadcrumb-current">
+        Poll #{{ poll.id }}
+    </span>
+</nav>
+
+<!-- ── Poll Header ────────────────────────────────────── -->
+<div class="pd-header mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-3 mb-1">
+            <h4 class="db-page-title mb-0">
+                {{ poll.question }}
+            </h4>
+            <!-- Active / Expired badge -->
+            <span class="mp-badge
+                {% if is_expired %}mp-badge-expired
+                {% else %}mp-badge-active{% endif %}">
+                <i class="bi bi-circle-fill me-1"
+                   style="font-size:0.4rem;"></i>
+                {% if is_expired %}Expired{% else %}Active{% endif %}
+            </span>
+        </div>
+        <!-- Meta info -->
+        <div class="pd-meta">
+            <span>
+                <i class="bi bi-hand-index-thumb me-1"></i>
+                {{ total_votes }} votes
+            </span>
+            <span>
+                <i class="bi bi-clock me-1"></i>
+                {{ poll.end_time[:16].replace('T', ' ') }}
+            </span>
+            <span>
+                <i class="bi bi-hash me-1"></i>
+                Poll #{{ poll.id }}
+            </span>
+        </div>
+        <!-- ── Share Link ─────────────────────────────────────── -->
+<div class="pd-share-row mt-3">
+    <span class="pd-share-label">
+        <i class="bi bi-share me-1"></i>
+        Share with voters:
+    </span>
+    <div class="pd-share-box">
+        <input type="text"
+               class="pd-share-input"
+               id="shareLink"
+               value="{{ request.host_url }}poll/{{ poll.id }}"
+               readonly>
+        <button class="pd-copy-btn"
+                type="button"
+                onclick="copyLink()">
+            <i class="bi bi-clipboard" id="copyIcon"></i>
+        </button>
+    </div>
+    <span id="copyMsg"
+          class="pd-copy-msg d-none">
+        <i class="bi bi-check2 me-1"></i>
+        Copied!
+    </span>
+</div>
+    </div>
+</div>
+
+<!-- ── Tab Buttons ────────────────────────────────────── -->
+<ul class="nav pd-tabs mb-4" id="pollTabs">
+
+    <li class="nav-item">
+        <button class="pd-tab-btn active"
+                data-bs-toggle="tab"
+                data-bs-target="#detailsPanel">
+            <i class="bi bi-list-ul me-2"></i>
+            Details
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="pd-tab-btn"
+                data-bs-toggle="tab"
+                data-bs-target="#graphPanel">
+            <i class="bi bi-pie-chart-fill me-2"></i>
+            Graph
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="pd-tab-btn"
+                data-bs-toggle="tab"
+                data-bs-target="#logsPanel">
+            <i class="bi bi-journal-text me-2"></i>
+            Logs
+        </button>
+    </li>
+
+</ul>
+
+<!-- ── Tab Content ────────────────────────────────────── -->
+<div class="tab-content">
+
+    <!-- ── TAB 1: Details ─────────────────────────────── -->
+    <div class="tab-pane fade show active" id="detailsPanel">
+        <div class="pd-card">
+
+            <h6 class="pd-section-label mb-4">
+                Vote Breakdown
+            </h6>
+
+            {% if total_votes == 0 %}
+            <div class="pd-empty">
+                <i class="bi bi-inbox"></i>
+                <p>No votes yet.</p>
+            </div>
+
+            {% else %}
+            {% for option in options_data %}
+            <div class="pd-option-row mb-3">
+
+                <!-- Option text + counts -->
+                <div class="pd-option-header">
+                    <span class="pd-option-text">
+                        {{ option.text }}
+                    </span>
+                    <span class="pd-option-stat">
+                        {{ option.votes }} votes
+                        ({{ option.percentage }}%)
+                    </span>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="pd-progress-bg">
+                    <div class="pd-progress-fill"
+                         style="width: {{ option.percentage }}%">
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- ── TAB 2: Graph ───────────────────────────────── -->
+    <div class="tab-pane fade" id="graphPanel">
+        <div class="pd-card">
+
+            <h6 class="pd-section-label mb-4">
+                Results Chart
+                {% if not is_expired %}
+                <span class="pd-live-badge">
+                    <i class="bi bi-circle-fill me-1"></i>
+                    Live
+                </span>
+                {% endif %}
+            </h6>
+
+            {% if total_votes == 0 %}
+            <div class="pd-empty">
+                <i class="bi bi-pie-chart"></i>
+                <p>No votes yet to display.</p>
+            </div>
+            {% else %}
+            <div class="pd-chart-wrap">
+                <canvas id="pollChart"></canvas>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- ── TAB 3: Logs ────────────────────────────────── -->
+    <div class="tab-pane fade" id="logsPanel">
+        <div class="pd-card">
+
+            <h6 class="pd-section-label mb-4">
+                Vote Logs
+            </h6>
+
+            {% if logs %}
+
+            <!-- Logs Table Header -->
+            <div class="pd-logs-header">
+                <span>#</span>
+                <span>Encrypted ID</span>
+                <span>Browser</span>
+                <span>Time</span>
+            </div>
+
+            <!-- Logs Rows -->
+            {% for log in logs %}
+            <div class="pd-log-row">
+                <span class="pd-log-id">
+                    {{ log.id }}
+                </span>
+                <span class="pd-log-enc">
+                    {{ log.encrypted_identifier[:20] }}...
+                </span>
+                <span class="pd-log-browser">
+                    {{ log.browser or 'Unknown' }}
+                </span>
+                <span class="pd-log-time">
+                    {{ log.created_at[:16].replace('T',' ')
+                       if log.created_at else '—' }}
+                </span>
+            </div>
+            {% endfor %}
+
+            {% else %}
+            <div class="pd-empty">
+                <i class="bi bi-journal-x"></i>
+                <p>No vote logs yet.</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+<!-- end tab content -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ── Data passed from Flask → JS ───────────────────────
+    const OPTIONS = {{ options_data | tojson }};
+    const POLL_ID = {{ poll.id }};
+    const IS_EXPIRED = "{{ is_expired }}" === "True";
+</script>
+<script src="{{ url_for('static', filename='js/poll_detail.js') }}">
+</script>
+{% endblock %}

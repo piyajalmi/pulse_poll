@@ -849,3 +849,280 @@
         display: none;
     }
 }
+
+/* ── Poll Detail Header ───────────────────────────────── */
+.pd-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
+}
+
+.pd-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ── Tab Buttons ──────────────────────────────────────── */
+.pd-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pd-tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;      /* overlaps the ul border */
+    transition: all 0.2s ease;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+}
+
+.pd-tab-btn:hover {
+    color: #4f46e5;
+    background: #f5f3ff;
+}
+
+/* Active tab — purple underline */
+.pd-tab-btn.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+    background: transparent;
+}
+
+/* ── Tab Content Card ─────────────────────────────────── */
+.pd-card {
+    background: #ffffff;
+    border-radius: 0 16px 16px 16px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    padding: 28px;
+}
+
+.pd-section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 0;
+}
+
+/* ── Details Tab — Option Rows ────────────────────────── */
+.pd-option-row {
+    margin-bottom: 20px;
+}
+
+.pd-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.pd-option-text {
+    font-weight: 600;
+    color: #1e1b4b;
+    font-size: 0.95rem;
+}
+
+.pd-option-stat {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* Progress bar background track */
+.pd-progress-bg {
+    background: #f1f5f9;
+    border-radius: 50px;
+    height: 10px;
+    overflow: hidden;
+}
+
+/* Progress bar fill */
+.pd-progress-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #4f46e5, #818cf8);
+    transition: width 0.6s ease;
+    min-width: 4px;        /* shows tiny bar even for 0% */
+}
+
+/* ── Graph Tab — Live Badge ───────────────────────────── */
+.pd-live-badge {
+    background: #ecfdf5;
+    color: #065f46;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 50px;
+    margin-left: 10px;
+    animation: pulse-dot 1.5s infinite;
+}
+
+/* Chart container */
+.pd-chart-wrap {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 16px 0;
+}
+
+/* ── Logs Tab ─────────────────────────────────────────── */
+.pd-logs-header {
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr 1fr;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.pd-log-row {
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr 1fr;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.pd-log-row:last-child {
+    border-bottom: none;
+}
+
+.pd-log-row:hover {
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.pd-log-id {
+    font-weight: 700;
+    color: #4f46e5;
+    font-size: 0.85rem;
+}
+
+.pd-log-enc {
+    font-family: monospace;   /* looks like code */
+    font-size: 0.78rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+    width: fit-content;
+}
+
+.pd-log-browser {
+    font-size: 0.82rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.pd-log-time {
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
+/* ── Empty State inside tabs ──────────────────────────── */
+.pd-empty {
+    text-align: center;
+    padding: 40px;
+    color: #94a3b8;
+}
+
+.pd-empty i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.pd-empty p {
+    font-weight: 500;
+    margin: 0;
+}
+/* ── Share Row ────────────────────────────────────────── */
+.pd-share-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pd-share-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.pd-share-box {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    flex: 1;
+    max-width: 400px;
+}
+
+.pd-share-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #475569;
+    outline: none;
+    cursor: text;
+}
+
+.pd-copy-btn {
+    background: #ede9fe;
+    border: none;
+    padding: 8px 14px;
+    color: #4f46e5;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.pd-copy-btn:hover {
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+.pd-copy-msg {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #065f46;
+}
+/* Not Started badge  - dashboard table */
+.mp-badge-not-started {
+    background: #fef9c3;
+    color: #854d0e;
+}
+/* Not Started badge — poll cards */
+.mp-badge-not-started {
+    background: #fef9c3;
+    color: #854d0e;
+}

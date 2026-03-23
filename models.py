@@ -63,6 +63,8 @@ def init_db():
             last_name varchar(100),
             email varchar(100),
             password varchar(100) NOT NULL,
+            role VARCHAR(10) DEFAULT 'user'
+                 CHECK(role IN ('user', 'admin')),
             created_at TIMESTAMP,
             created_id INTEGER,
             status TINYINT
@@ -96,6 +98,28 @@ def init_db():
             FOREIGN KEY (created_id) REFERENCES users(id)
         )
     """)
+
+    #create admin
+    existing_admin = conn.execute(
+        "SELECT id FROM users WHERE role = 'admin'"
+    ).fetchone()
+
+    if not existing_admin:
+        conn.execute("""
+            INSERT INTO users (first_name, last_name,
+                               email, password, role,
+                               created_at, status)
+            VALUES (?, ?, ?, ?, 'admin',
+                    datetime('now', 'localtime'), 1)
+        """, (
+            'Pia',
+            'Jalmi',
+            'piya.intern@gmail.com',
+            'admin@123'
+        ))
+        conn.commit()
+        print("Admin user created successfully.")
+
     conn.commit()#to save changes to the database
     conn.close()
     print("Database initialized successfully.")

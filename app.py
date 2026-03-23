@@ -6,6 +6,7 @@ import sqlite3
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from flask_socketio import SocketIO
 from config import Config
+from functools import wraps
 from models import get_db_connection, init_db
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -579,10 +580,16 @@ def login_validation():
     conn.close()
 
     if user:
-        session['user_id']   = user['id']           # ← use column names not indices
-        session['user_name'] = user['first_name']   # ← safer with row_factory
+        session['user_id']   = user['id']           
+        session['user_name'] = user['first_name'] 
+        session['role'] = user['role']  
         session.permanent    = True
-        return redirect(url_for('poll.index'))           # ← go to home, no need to pass params in URL
+
+        #direction based on role
+        if user['role'] == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('poll.index'))           
     else:
         flash('Invalid email or password.', 'danger')
         return redirect(url_for('login'))
@@ -630,6 +637,241 @@ def add_user():
         return redirect(url_for('login'))
 
 
+
+# ADMIN ROUTES-------------------
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        if session.get('role') != 'admin':
+            return render_template('404.html'), 404
+        return f(*args, **kwargs)
+    return decorated
+#GET /admin/dashboard
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+
+    conn = get_db_connection()
+
+    # Get filter parameter
+    filter_user = request.args.get('user_id', None)
+
+    # ── Platform stats ────────────────────────────────────
+    total_users = conn.execute("""
+        SELECT COUNT(*) as count FROM users
+        WHERE role = 'user' AND status = 1
+    """).fetchone()['count']
+
+    # If filter applied → stats for that user only
+    if filter_user:
+        total_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE user_id = ? AND status = 1
+        """, (filter_user,)).fetchone()['count']
+
+        total_votes = conn.execute("""
+            SELECT COUNT(*) as count FROM votes
+            WHERE poll_id IN (
+                SELECT id FROM polls WHERE user_id = ?
+            )
+        """, (filter_user,)).fetchone()['count']
+
+        active_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE user_id = ?
+            AND status = 1
+            AND end_time > datetime('now', 'localtime')
+        """, (filter_user,)).fetchone()['count']
+
+    else:
+        # All users stats
+        total_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+        """).fetchone()['count']
+
+        total_votes = conn.execute("""
+            SELECT COUNT(*) as count FROM votes
+        """).fetchone()['count']
+
+        active_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+            AND end_time > datetime('now', 'localtime')
+        """).fetchone()['count']
+
+    # ── Recent polls ──────────────────────────────────────
+    if filter_user:
+        recent_polls = conn.execute("""
+            SELECT
+                p.id, p.question, p.end_time,
+                p.start_time,
+                u.first_name, u.last_name,
+                COUNT(v.id) as vote_count,
+                CASE
+                    WHEN datetime(p.end_time) <=
+                         datetime('now','localtime')
+                        THEN 'Expired'
+                    WHEN datetime(p.start_time) >
+                         datetime('now','localtime')
+                        THEN 'Not Started'
+                    ELSE 'Active'
+                END as status
+            FROM polls p
+            LEFT JOIN votes v ON v.poll_id = p.id
+            LEFT JOIN users u ON u.id = p.user_id
+            WHERE p.status = 1 AND p.user_id = ?
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+            LIMIT 5
+        """, (filter_user,)).fetchall()
+    else:
+        recent_polls = conn.execute("""
+            SELECT
+                p.id, p.question, p.end_time,
+                p.start_time,
+                u.first_name, u.last_name,
+                COUNT(v.id) as vote_count,
+                CASE
+                    WHEN datetime(p.end_time) <=
+                         datetime('now','localtime')
+                        THEN 'Expired'
+                    WHEN datetime(p.start_time) >
+                         datetime('now','localtime')
+                        THEN 'Not Started'
+                    ELSE 'Active'
+                END as status
+            FROM polls p
+            LEFT JOIN votes v ON v.poll_id = p.id
+            LEFT JOIN users u ON u.id = p.user_id
+            WHERE p.status = 1
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+            LIMIT 5
+        """).fetchall()
+
+    # ── Users list for filter dropdown ────────────────────
+    users = conn.execute("""
+        SELECT id, first_name, last_name, email
+        FROM users
+        WHERE role = 'user' AND status = 1
+        ORDER BY first_name
+    """).fetchall()
+
+    conn.close()
+
+    return render_template('admin_dashboard.html',
+                           active_page  = 'admin_dashboard',
+                           total_users  = total_users,
+                           total_polls  = total_polls,
+                           total_votes  = total_votes,
+                           active_polls = active_polls,
+                           recent_polls = recent_polls,
+                           users        = users,
+                           filter_user  = filter_user)
+
+#GET /admin/polls
+@app.route('/admin/polls')
+@admin_required
+def admin_polls():
+
+    conn = get_db_connection()
+    page     = request.args.get('page', 1, type=int)
+    per_page = 10
+    offset   = (page - 1) * per_page
+
+    # ── Filters from URL params ───────────────────────────
+    filter_user   = request.args.get('user_id', '')
+    filter_status = request.args.get('status', '')
+    filter_date   = request.args.get('date', '')
+
+    # ── Build dynamic WHERE clause ────────────────────────
+    where_clauses = ["p.status = 1"]
+    params        = []
+
+    if filter_user:
+        where_clauses.append("p.user_id = ?")
+        params.append(filter_user)
+
+    if filter_status == 'active':
+        where_clauses.append("""
+            datetime(p.end_time) > datetime('now','localtime')
+            AND datetime(p.start_time) <=
+                datetime('now','localtime')
+        """)
+    elif filter_status == 'expired':
+        where_clauses.append("""
+            datetime(p.end_time) <=
+            datetime('now','localtime')
+        """)
+    elif filter_status == 'not_started':
+        where_clauses.append("""
+            datetime(p.start_time) >
+            datetime('now','localtime')
+        """)
+
+    if filter_date:
+        where_clauses.append("DATE(p.created_at) = ?")
+        params.append(filter_date)
+
+    where_sql = " AND ".join(where_clauses)
+
+    # ── Total count for pagination ────────────────────────
+    total_count = conn.execute(f"""
+        SELECT COUNT(*) FROM polls p
+        WHERE {where_sql}
+    """, params).fetchone()[0]
+
+    # ── Fetch polls ───────────────────────────────────────
+    polls = conn.execute(f"""
+        SELECT
+            p.id, p.question,
+            p.start_time, p.end_time,
+            p.poll_type,
+            u.first_name, u.last_name,
+            COUNT(v.id) as vote_count,
+            CASE
+                WHEN datetime(p.end_time) <=
+                     datetime('now','localtime')
+                    THEN 'Expired'
+                WHEN datetime(p.start_time) >
+                     datetime('now','localtime')
+                    THEN 'Not Started'
+                ELSE 'Active'
+            END as status
+        FROM polls p
+        LEFT JOIN votes v ON v.poll_id = p.id
+        LEFT JOIN users u ON u.id = p.user_id
+        WHERE {where_sql}
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+        LIMIT ? OFFSET ?
+    """, params + [per_page, offset]).fetchall()
+
+    # ── Users for filter dropdown ─────────────────────────
+    users = conn.execute("""
+        SELECT id, first_name, last_name
+        FROM users WHERE role = 'user' AND status = 1
+        ORDER BY first_name
+    """).fetchall()
+
+    conn.close()
+
+    total_pages = (total_count + per_page - 1) // per_page
+
+    return render_template('admin_polls.html',
+                           active_page    = 'admin_polls',
+                           polls          = polls,
+                           users          = users,
+                           current_page   = page,
+                           total_pages    = total_pages,
+                           total_count    = total_count,
+                           filter_user    = filter_user,
+                           filter_status  = filter_status,
+                           filter_date    = filter_date)
+
 # @app.route('/polls')
 # def polls_list():
 #     conn = get_db_connection()
@@ -646,8 +888,10 @@ def add_user():
 def logout():
     session.pop('user_id', None)
     session.pop('user_name', None)
+    session.pop('role', None)
     flash('You have been logged out.', 'info')
-    return redirect(url_for('poll.index'))  # ← redirect to poll blueprint's index
+    return redirect(url_for('poll.index'))  
+
 
 
 # ── Global Error Handlers ─────────────────────────────────

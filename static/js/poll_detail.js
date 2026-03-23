@@ -81,7 +81,10 @@ function drawChart(optionsData) {
 // ── WebSocket for live updates ─────────────────────────
 function initWebSocket() {
 
-    const socket = io();
+    const socket = io({
+    transports: ['websocket'],
+    upgrade: false
+});
 
     // When connected → join this poll's room
     socket.on("connect", function () {
@@ -91,7 +94,7 @@ function initWebSocket() {
 
     // When vote comes in → update chart
     socket.on("vote_update", function (data) {
-        if (data.poll_id === POLL_ID) {
+        if (String(data.poll_id) === String(POLL_ID)) {
             console.log("Live vote received!", data);
             drawChart(data.results);
             updateDetails(data.results);

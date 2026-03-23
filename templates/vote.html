@@ -68,73 +68,149 @@
 
                 <!-- ── Active Voting State ───────────────── -->
                 {% else %}
-                <div class="pp-card">
+<div class="pp-card">
 
-                    <!-- Poll Header -->
-                    <div class="pp-vote-header mb-4">
-                        <h3 class="pp-question">{{ poll.question }}</h3>
-                        <div class="pp-timer" id="timerDisplay">
-                            <i class="bi bi-clock me-1"></i>
-                            <span id="timerText">Loading...</span>
-                        </div>
+    <!-- Poll Header -->
+    <div class="pp-vote-header mb-4">
+        <h3 class="pp-question">{{ poll.question }}</h3>
+
+        <!-- Poll type indicator -->
+        <div class="pp-poll-type-badge mb-2">
+            {% if poll.poll_type == 'multiple' %}
+            <i class="bi bi-check2-square me-1"></i>
+            Select multiple options
+            {% else %}
+            <i class="bi bi-record-circle me-1"></i>
+            Select one option
+            {% endif %}
+        </div>
+
+        <div class="pp-timer" id="timerDisplay">
+            <i class="bi bi-clock me-1"></i>
+            <span id="timerText">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Options -->
+    <div id="optionsList" class="mb-4">
+        {% for option in poll.options %}
+        <div class="pp-option"
+             id="opt_{{ loop.index }}"
+             onclick="selectOption(this,
+                      {{ option.id }},
+                      '{{ option.text }}',
+                      '{{ poll.poll_type }}')">
+
+            <!-- Radio or Checkbox -->
+            {% if poll.poll_type == 'multiple' %}
+            <div class="pp-option-checkbox"
+                 id="check_{{ loop.index }}">
+                <i class="bi bi-square"></i>
+            </div>
+            {% else %}
+            <div class="pp-option-radio"
+                 id="radio_{{ loop.index }}">
+            </div>
+            {% endif %}
+
+            <!-- Option Content -->
+            <div class="pp-option-content">
+
+                <!-- Text -->
+                <span class="pp-option-text">
+                    {{ option.text }}
+                </span>
+
+                <!-- File preview if exists -->
+                {% if option.file_path %}
+                <div class="pp-option-file mt-2">
+
+                    {% if option.file_type and
+                          option.file_type.startswith('image/') %}
+                    <!-- Image preview -->
+                    <img src="/{{ option.file_path }}"
+                         alt="{{ option.text }}"
+                         class="pp-option-img">
+
+                    {% elif option.file_type and
+                            option.file_type.startswith('video/') %}
+                    <!-- Video -->
+                    <div class="pp-file-badge">
+                        <i class="bi bi-film me-1"></i>
+                        {{ option.original_name }}
                     </div>
 
-                    <!-- Options -->
-                    <div id="optionsList" class="mb-4">
-                        {% for option in poll.options %}
-                        <div class="pp-option"
-                             id="opt_{{ loop.index }}"
-                             onclick="selectOption(this, {{ option.id }}, '{{ option.text }}')">
-                            <div class="pp-option-radio"
-                                 id="radio_{{ loop.index }}">
-                            </div>
-                            <span class="pp-option-text">
-                                {{ option.text }}
-                            </span>
-                        </div>
-                        {% endfor %}
+                    {% elif option.file_type and
+                            option.file_type.startswith('audio/') %}
+                    <!-- Audio -->
+                    <div class="pp-file-badge">
+                        <i class="bi bi-music-note me-1"></i>
+                        {{ option.original_name }}
                     </div>
 
-                    <!-- Error message -->
-                    <div id="voteError"
-                         class="text-danger small mb-3 d-none">
-                        <i class="bi bi-exclamation-circle me-1"></i>
-                        Please select an option before submitting.
+                    {% elif option.file_type == 'application/pdf' %}
+                    <!-- PDF -->
+                    <div class="pp-file-badge">
+                        <i class="bi bi-file-pdf me-1"></i>
+                        {{ option.original_name }}
                     </div>
 
-                    <!-- Submit Button -->
-                    <button class="btn btn-pp-primary w-100"
-                            type="button"
-                            id="submitVoteBtn"
-                            onclick="confirmVote()">
-                        <i class="bi bi-send-fill me-2"></i>
-                        Submit Vote
-                    </button>
-
-                    <!-- Share Link -->
-                    <div class="pp-share-box mt-4">
-                        <small class="text-muted">Share this poll:</small>
-                        <div class="input-group mt-1">
-                            <input type="text"
-                                   class="form-control pp-input"
-                                   id="shareLink"
-                                   value="{{ request.host_url }}poll/{{ poll.id }}"
-                                   readonly>
-                            <button class="btn btn-pp-outline"
-                                    type="button"
-                                    onclick="copyLink()">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
-                        </div>
-                        <div id="copyMsg"
-                             class="text-success small mt-1 d-none">
-                            <i class="bi bi-check2 me-1"></i>
-                            Link copied!
-                        </div>
+                    {% else %}
+                    <!-- Generic file -->
+                    <div class="pp-file-badge">
+                        <i class="bi bi-paperclip me-1"></i>
+                        {{ option.original_name }}
                     </div>
+                    {% endif %}
 
                 </div>
                 {% endif %}
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Error message -->
+    <div id="voteError"
+         class="text-danger small mb-3 d-none">
+        <i class="bi bi-exclamation-circle me-1"></i>
+        Please select an option before submitting.
+    </div>
+
+    <!-- Submit Button -->
+    <button class="btn btn-pp-primary w-100"
+            type="button"
+            id="submitVoteBtn"
+            onclick="confirmVote()">
+        <i class="bi bi-send-fill me-2"></i>
+        Submit Vote
+    </button>
+
+    <!-- Share Link -->
+    <div class="pp-share-box mt-4">
+        <small class="text-muted">Share this poll:</small>
+        <div class="input-group mt-1">
+            <input type="text"
+                   class="form-control pp-input"
+                   id="shareLink"
+                   value="{{ request.host_url }}poll/{{ poll.id }}"
+                   readonly>
+            <button class="btn btn-pp-outline"
+                    type="button"
+                    onclick="copyLink()">
+                <i class="bi bi-clipboard"></i>
+            </button>
+        </div>
+        <div id="copyMsg"
+             class="text-success small mt-1 d-none">
+            <i class="bi bi-check2 me-1"></i>
+            Link copied!
+        </div>
+    </div>
+
+</div>
+{% endif %}
 
             </div>
         </div>
@@ -182,6 +258,7 @@
 <script>
     const POLL_ID  = "{{ poll.id }}";
     const END_TIME = "{{ poll.end_time }}";
+    const POLL_TYPE = "{{ poll.poll_type }}";
 </script>
 <script src="{{ url_for('static', filename='js/vote.js') }}">
 </script>

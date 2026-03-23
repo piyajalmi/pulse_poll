@@ -1488,3 +1488,241 @@ h1 {
         font-size: 2rem;
     }
 }
+
+/* ── Auth Section ─────────────────────────────────────── */
+.auth-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url('/static/images/hero-bg.png');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    padding: 40px 16px;
+}
+
+.auth-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(20, 15, 80, 0.75) 0%,
+        rgba(60, 40, 140, 0.65) 100%
+    );
+}
+
+/* ── Wrapper ──────────────────────────────────────────── */
+.auth-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+/* ── Logo ─────────────────────────────────────────────── */
+.auth-logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.auth-pulse { color: #ffffff; }
+.auth-poll  { color: #a5b4fc; }
+
+/* ── Card ─────────────────────────────────────────────── */
+.auth-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 36px;
+    width: 100%;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Card Header ──────────────────────────────────────── */
+.auth-card-header {
+    margin-bottom: 24px;
+}
+
+.auth-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e1b4b;
+    margin-bottom: 4px;
+}
+
+.auth-subtitle {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ── Form Fields ──────────────────────────────────────── */
+.auth-field {
+    margin-bottom: 16px;
+}
+
+.auth-label {
+    font-weight: 600;
+    color: #1e1b4b;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* ── Input with icon ──────────────────────────────────── */
+.auth-input-wrap {
+    position: relative;
+}
+
+.auth-input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.auth-input {
+    width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 11px 16px 11px 40px;
+    font-size: 0.95rem;
+    color: #1e1b4b;
+    transition: border-color 0.2s;
+    outline: none;
+}
+
+.auth-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+}
+
+.auth-input::placeholder {
+    color: #94a3b8;
+}
+
+/* ── Flash Alert ──────────────────────────────────────── */
+.auth-alert {
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.auth-alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.auth-alert-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.auth-alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+/* ── Switch link ──────────────────────────────────────── */
+.auth-switch {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 0;
+    font-size: 0.88rem;
+    color: #64748b;
+}
+
+.auth-link {
+    color: #4f46e5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    color: #4338ca;
+    text-decoration: underline;
+}
+
+/* ── admin button ───────────────────────────────────────── */
+.btn.btn-outline-primary.btn-sm.border.border-0:hover {
+  --bs-btn-hover-bg: #1e1b4b;
+}
+
+/* ── Poll type badge ──────────────────────────────────── */
+.pp-poll-type-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #ede9fe;
+    color: #4f46e5;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ── Option content wrapper ───────────────────────────── */
+.pp-option-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* ── Checkbox style ───────────────────────────────────── */
+.pp-option-checkbox {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    color: #cbd5e1;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.pp-option.selected .pp-option-checkbox {
+    color: #4f46e5;
+}
+
+/* ── Option image preview ─────────────────────────────── */
+.pp-option-img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+
+/* ── File badge ───────────────────────────────────────── */
+.pp-file-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 500;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

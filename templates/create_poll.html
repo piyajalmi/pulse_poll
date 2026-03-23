@@ -16,19 +16,21 @@
 
 <!-- ── Page Header ────────────────────────────────────── -->
 <div class="db-page-header mb-4">
-    <h4 class="db-page-title">
-        <i class="bi bi-plus-circle-fill me-2"
-           style="color:#4f46e5;"></i>
-        Create a New Poll
-    </h4>
-    <p class="db-page-subtitle">
-        Fill in the details below to launch your poll.
-    </p>
+    <div>
+        <h4 class="db-page-title">
+            <i class="bi bi-plus-circle-fill me-2"
+               style="color:#4f46e5;"></i>
+            Create a New Poll
+        </h4>
+        <p class="db-page-subtitle">
+            Fill in the details below to launch your poll.
+        </p>
+    </div>
 </div>
 
 <!-- ── Poll Creation Card ─────────────────────────────── -->
 <div class="row">
-    <div class="col-lg-7 col-md-9">
+    <div class="col-12">
         <div class="pp-card">
 
             <!-- Poll Question -->
@@ -39,21 +41,68 @@
                        class="form-control pp-input"
                        placeholder="What would you like to ask?"
                        maxlength="200">
-                <div class="invalid-feedback" id="questionError">
+                <div class="text-danger small mt-1 d-none"
+                     id="questionError">
                     Please enter a poll question.
+                </div>
+            </div>
+
+            <!-- Poll Type -->
+            <div class="mb-4">
+                <label class="pp-label">Poll Type</label>
+                <div class="cp-type-row">
+
+                    <label class="cp-type-option" id="typeSingle">
+                        <input type="radio"
+                               name="pollType"
+                               value="single"
+                               checked
+                               onchange="setPollType('single')">
+                        <div class="cp-type-card">
+                            <i class="bi bi-record-circle"></i>
+                            <span class="cp-type-title">
+                                Single Choice
+                            </span>
+                            <span class="cp-type-desc">
+                                Voters pick one option
+                            </span>
+                        </div>
+                    </label>
+
+                    <label class="cp-type-option" id="typeMultiple">
+                        <input type="radio"
+                               name="pollType"
+                               value="multiple"
+                               onchange="setPollType('multiple')">
+                        <div class="cp-type-card">
+                            <i class="bi bi-check2-square"></i>
+                            <span class="cp-type-title">
+                                Multiple Choice
+                            </span>
+                            <span class="cp-type-desc">
+                                Voters pick many options
+                            </span>
+                        </div>
+                    </label>
+
                 </div>
             </div>
 
             <!-- Poll Options -->
             <div class="mb-4">
-                <label class="pp-label">Options</label>
+                <div class="d-flex align-items-center
+                            justify-content-between mb-2">
+                    <label class="pp-label mb-0">Options</label>
+                    <button class="btn btn-pp-add-option"
+                            type="button"
+                            onclick="addOption()">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Option
+                    </button>
+                </div>
+
                 <div id="optionsContainer"></div>
-                <button class="btn btn-pp-add-option mt-2"
-                        type="button"
-                        onclick="addOption()">
-                    <i class="bi bi-plus-circle me-1"></i>
-                    Add Option
-                </button>
+
                 <div class="text-danger small mt-1 d-none"
                      id="optionsError">
                     Please add at least 2 options.
@@ -61,50 +110,50 @@
             </div>
 
             <!-- Poll Start Date & Time -->
-<div class="mb-4">
-    <label class="pp-label">
-        Poll Start Date & Time
-    </label>
-    <div class="row g-2">
-        <div class="col-7">
-            <input type="date"
-                   id="pollStartDate"
-                   class="form-control pp-input">
-        </div>
-        <div class="col-5">
-            <input type="time"
-                   id="pollStartTime"
-                   class="form-control pp-input">
-        </div>
-    </div>
-    <div class="text-danger small mt-1 d-none"
-         id="startError">
-        Please select a valid start date and time.
-    </div>
-</div>
+            <div class="mb-4">
+                <label class="pp-label">
+                    Poll Start Date & Time
+                </label>
+                <div class="row g-2">
+                    <div class="col-7">
+                        <input type="date"
+                               id="pollStartDate"
+                               class="form-control pp-input">
+                    </div>
+                    <div class="col-5">
+                        <input type="time"
+                               id="pollStartTime"
+                               class="form-control pp-input">
+                    </div>
+                </div>
+                <div class="text-danger small mt-1 d-none"
+                     id="startError">
+                    Please select a valid start date and time.
+                </div>
+            </div>
 
-<!-- Poll End Date & Time -->
-<div class="mb-4">
-    <label class="pp-label">
-        Poll End Date & Time
-    </label>
-    <div class="row g-2">
-        <div class="col-7">
-            <input type="date"
-                   id="pollEndDate"
-                   class="form-control pp-input">
-        </div>
-        <div class="col-5">
-            <input type="time"
-                   id="pollEndTime"
-                   class="form-control pp-input">
-        </div>
-    </div>
-    <div class="text-danger small mt-1 d-none"
-         id="timeError">
-        Please select a valid end date and time.
-    </div>
-</div>
+            <!-- Poll End Date & Time -->
+            <div class="mb-4">
+                <label class="pp-label">
+                    Poll End Date & Time
+                </label>
+                <div class="row g-2">
+                    <div class="col-7">
+                        <input type="date"
+                               id="pollEndDate"
+                               class="form-control pp-input">
+                    </div>
+                    <div class="col-5">
+                        <input type="time"
+                               id="pollEndTime"
+                               class="form-control pp-input">
+                    </div>
+                </div>
+                <div class="text-danger small mt-1 d-none"
+                     id="timeError">
+                    Please select a valid end date and time.
+                </div>
+            </div>
 
             <!-- Submit Button -->
             <button class="btn btn-pp-primary w-100 mt-2"
@@ -115,7 +164,6 @@
                 Create Poll
             </button>
 
-            <!-- Message -->
             <div id="formMessage" class="mt-3 d-none"></div>
 
         </div>

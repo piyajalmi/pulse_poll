@@ -57,7 +57,7 @@
             <!-- Poll Number + Question -->
             <div class="mp-card-body">
                 <p class="mp-poll-number">
-                    Poll #{{ poll.id }}
+                    Poll {{ ((current_page -1) * 8) + loop.index }}
                 </p>
                 <h6 class="mp-poll-question">
                     {{ poll.question }}

@@ -11,12 +11,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # ── Create Flask app ──────────────────────────────────────
 app = Flask(__name__)
 app.config.from_object(Config)
-app.permanent_session_lifetime = timedelta(minutes=30)  # 1 min is too short, changed to 30
+app.permanent_session_lifetime = timedelta(minutes=30)  
 
 # ── Initialize SocketIO ───────────────────────────────────
 socketio = SocketIO(app,
                     cors_allowed_origins="*",
-                    async_mode="eventlet")
+                    async_mode="eventlet",
+                    logger=True,           # ← shows debug info
+                    engineio_logger=True) #shows cinnnection info
 
 # ── Initialize database ───────────────────────────────────
 with app.app_context():
@@ -43,7 +45,7 @@ def make_session_permanent():
 # ── Auth Routes ───────────────────────────────────────────
 @app.route('/login')
 def login():
-    return render_template('login.html')
+    return render_template('login.html', hide_navbar=True, hide_footer=True)  # ← pass flag to hide navbar and footer
 
 @app.route('/faqs')
 def faqs():
@@ -97,10 +99,11 @@ def dashboard():
         LEFT JOIN votes v ON v.poll_id = p.id
         LEFT JOIN users u ON u.id = p.user_id 
         WHERE p.status = 1 
+        AND p.user_id = ?
         GROUP BY p.id
         ORDER BY p.created_at DESC
         LIMIT 5
-    """).fetchall()
+    """, (user_id,)).fetchall()
                                 
     conn.close()
     # ── Calculate percentages for progress circles ────────
@@ -223,8 +226,7 @@ def poll_detail(poll_id):
         SELECT
             v.id,
             v.created_at,
-            vi.encrypted_identifier,
-            vi.browser
+            vi.encrypted_identifier
         FROM votes v
         LEFT JOIN vote_identity vi ON vi.vote_id = v.id
         WHERE v.poll_id = ?
@@ -327,7 +329,7 @@ def login_validation():
         session['user_id']   = user['id']           # ← use column names not indices
         session['user_name'] = user['first_name']   # ← safer with row_factory
         session.permanent    = True
-        return redirect(url_for('dashboard'))           # ← go to home, no need to pass params in URL
+        return redirect(url_for('poll.index'))           # ← go to home, no need to pass params in URL
     else:
         flash('Invalid email or password.', 'danger')
         return redirect(url_for('login'))
@@ -335,7 +337,7 @@ def login_validation():
 
 @app.route('/signup')
 def signup():
-    return render_template('signUp.html')
+    return render_template('signUp.html', hide_navbar=True, hide_footer=True)  # ← pass flag to hide navbar and footer
 
 
 @app.route('/add_user', methods=['POST'])

@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify, session
 from flask_socketio import join_room, leave_room
 from datetime import datetime
@@ -9,7 +8,7 @@ import json
 vote_bp = Blueprint('vote', __name__)
 
 
-# ── Helper to get socketio instance ──────────────────────
+# ── Helper ────────────────────────────────────────────────
 def get_socketio():
     from app import socketio
     return socketio
@@ -19,8 +18,9 @@ def get_socketio():
 @vote_bp.route("/poll/<int:poll_id>/vote", methods=["POST"])
 def submit_vote(poll_id):
 
-    # ── Step 1: Get the poll ──────────────────────────────
     conn = get_db_connection()
+
+    # ── Step 1: Get poll ──────────────────────────────────
     poll = conn.execute(
         "SELECT * FROM polls WHERE id = ?", (poll_id,)
     ).fetchone()
@@ -29,28 +29,28 @@ def submit_vote(poll_id):
         conn.close()
         return jsonify({"error": "Poll not found."}), 404
 
-   # ── Step 2a: Check if poll has started ──────────────────
+    # ── Step 2a: Check not started ────────────────────────
     start_time_raw = poll["start_time"]
     if start_time_raw:
-        start_time_raw = start_time_raw.replace("T", " ")[:19]  # ← normalize
+        start_time_raw = start_time_raw.replace("T"," ")[:19]
         start_dt = datetime.fromisoformat(start_time_raw)
         if datetime.now() < start_dt:
             conn.close()
             return jsonify({
-            "error": "This poll hasn't started yet.",
-            "not_started": True
+                "error":       "This poll hasn't started yet.",
+                "not_started": True
             }), 400
 
-# ── Step 2: Check expiry ─────────────────────────────────
-    end_time_raw = poll["end_time"].replace("T", " ")[:19]      # ← normalize
-    end_dt = datetime.fromisoformat(end_time_raw)
+    # ── Step 2b: Check expiry ─────────────────────────────
+    end_time_raw = poll["end_time"].replace("T"," ")[:19]
+    end_dt       = datetime.fromisoformat(end_time_raw)
     if datetime.now() > end_dt:
         conn.close()
         return jsonify({
-        "error":        "This poll has expired.",
-        "is_expired":   True,
-        "results_link": f"/poll/{poll_id}/results"
-    }), 400
+            "error":        "This poll has expired.",
+            "is_expired":   True,
+            "results_link": f"/poll/{poll_id}/results"
+        }), 400
 
     # ── Step 3: Check duplicate via session ───────────────
     voted_key = f"voted_{poll_id}"
@@ -60,85 +60,122 @@ def submit_vote(poll_id):
             "error": "You have already voted in this poll."
         }), 400
 
-    # ── Step 4: Get selected option_id from request ───────
-    data      = request.get_json()
-    option_id = data.get("option_id")
+    # ── Step 4: Get option_ids + submission_id ────────────
+    data          = request.get_json()
+    option_ids    = data.get("option_ids", [])
+    submission_id = data.get("submission_id", "")
 
-    if not option_id:
+    if not option_ids:
         conn.close()
         return jsonify({"error": "No option selected."}), 400
 
-    # ── Step 5: Validate option belongs to this poll ──────
-    option = conn.execute("""
-        SELECT * FROM options
-        WHERE id = ? AND poll_id = ? AND status = 1
-    """, (option_id, poll_id)).fetchone()
+    # ── Step 5: Validate poll_type vs selection ───────────
+    poll_type = poll["poll_type"]
 
-    if not option:
+    if poll_type == "single" and len(option_ids) > 1:
         conn.close()
-        return jsonify({"error": "Invalid option selected."}), 400
+        return jsonify({
+            "error": "Only one option allowed for this poll."
+        }), 400
 
-    # ── Step 6: Build voter identifier ────────────────────
+    # ── Step 6: Validate all option_ids belong to poll ────
+    for option_id in option_ids:
+        option = conn.execute("""
+            SELECT id FROM options
+            WHERE id = ? AND poll_id = ? AND status = 1
+        """, (option_id, poll_id)).fetchone()
+
+        if not option:
+            conn.close()
+            return jsonify({
+                "error": f"Invalid option: {option_id}"
+            }), 400
+
+    # ── Step 7: Build voter identifier ────────────────────
     ip_address = request.remote_addr or "unknown"
     hashed_ip  = hash_ip(ip_address)
     identifier = f"{hashed_ip}_{poll_id}"
 
-    # ── Step 7: Save vote ─────────────────────────────────
-    cursor = conn.execute("""
-        INSERT INTO votes (poll_id, selected_option_id,
-                           created_at, created_id)
-        VALUES (?, ?, ?, ?)
-    """, (
-        poll_id,
-        option_id,
-        datetime.now().isoformat(),
-        session.get('user_id')
-    ))
-    vote_id = cursor.lastrowid
+    # ── Step 8: Insert one vote row per option_id ─────────
+    first_vote_id = None
 
-    # ── Step 8: Save encrypted identity ───────────────────
+    for option_id in option_ids:
+        cursor = conn.execute("""
+            INSERT INTO votes (poll_id, selected_option_id,
+                               submission_id,
+                               created_at, created_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            poll_id,
+            option_id,
+            submission_id,
+            datetime.now().isoformat(),
+            session.get('user_id')
+        ))
+
+        # Save first vote_id for vote_identity
+        if first_vote_id is None:
+            first_vote_id = cursor.lastrowid
+
+    # ── Step 9: Save encrypted identity ───────────────────
+    # Only ONE identity record per submission
     encrypted = encrypt_identifier(identifier)
     conn.execute("""
-        INSERT INTO vote_identity (vote_id, encrypted_identifier,
+        INSERT INTO vote_identity (vote_id,
+                                   encrypted_identifier,
                                    created_at)
         VALUES (?, ?, ?)
-    """, (vote_id, encrypted, datetime.now().isoformat()))
+    """, (
+        first_vote_id,
+        encrypted,
+        datetime.now().isoformat()
+    ))
 
     conn.commit()
 
-    # ── Step 9: Calculate updated results for broadcast ───
+    # ── Step 10: Calculate results for broadcast ──────────
     options = conn.execute("""
         SELECT id, option FROM options
         WHERE poll_id = ? AND status = 1
     """, (poll_id,)).fetchall()
 
+    # Count using DISTINCT submission_id
+    # so multiple choice doesn't inflate totals
     all_votes = conn.execute("""
-        SELECT selected_option_id FROM votes
+        SELECT selected_option_id,
+               COUNT(DISTINCT submission_id) as count
+        FROM votes
         WHERE poll_id = ?
+        GROUP BY selected_option_id
     """, (poll_id,)).fetchall()
 
-    option_map  = {o["id"]: o["option"] for o in options}
-    vote_counts = {o["option"]: 0 for o in options}
+    # Total unique submissions
+    total_row = conn.execute("""
+        SELECT COUNT(DISTINCT submission_id) as total
+        FROM votes WHERE poll_id = ?
+    """, (poll_id,)).fetchone()
+    total_votes = total_row['total'] if total_row else 0
 
+    # Build vote_counts dict
+    vote_counts = {o["id"]: 0 for o in options}
     for v in all_votes:
-        option_text = option_map.get(v["selected_option_id"])
-        if option_text:
-            vote_counts[option_text] += 1
+        vote_counts[v["selected_option_id"]] = v["count"]
 
-    total_votes = sum(vote_counts.values())
-    results     = []
-    for opt, count in vote_counts.items():
+    option_map = {o["id"]: o["option"] for o in options}
+    results    = []
+    for o in options:
+        count      = vote_counts.get(o["id"], 0)
         percentage = round((count / total_votes * 100), 1) \
                      if total_votes > 0 else 0
         results.append({
-            "option":     opt,
+            "option":     o["option"],
             "votes":      count,
             "percentage": percentage
         })
 
     conn.close()
 
-    # ── Step 10: Emit WebSocket update to poll room ───────
+    # ── Step 11: Emit WebSocket update ────────────────────
     get_socketio().emit(
         "vote_update",
         {
@@ -149,7 +186,7 @@ def submit_vote(poll_id):
         room=str(poll_id)
     )
 
-    # ── Step 11: Mark session as voted ────────────────────
+    # ── Step 12: Mark session as voted ────────────────────
     session[voted_key] = True
     session.permanent  = True
 
@@ -160,7 +197,8 @@ def submit_vote(poll_id):
 
 
 # ── GET /api/poll/<poll_id>/results ───────────────────────
-@vote_bp.route("/api/poll/<int:poll_id>/results", methods=["GET"])
+@vote_bp.route("/api/poll/<int:poll_id>/results",
+               methods=["GET"])
 def get_results(poll_id):
 
     conn = get_db_connection()
@@ -177,33 +215,42 @@ def get_results(poll_id):
         WHERE poll_id = ? AND status = 1
     """, (poll_id,)).fetchall()
 
+    # Count per option using DISTINCT submission_id
     all_votes = conn.execute("""
-        SELECT selected_option_id FROM votes
+        SELECT selected_option_id,
+               COUNT(DISTINCT submission_id) as count
+        FROM votes
         WHERE poll_id = ?
+        GROUP BY selected_option_id
     """, (poll_id,)).fetchall()
+
+    # Total unique voters
+    total_row = conn.execute("""
+        SELECT COUNT(DISTINCT submission_id) as total
+        FROM votes WHERE poll_id = ?
+    """, (poll_id,)).fetchone()
+    total_votes = total_row['total'] if total_row else 0
 
     conn.close()
 
-    option_map  = {o["id"]: o["option"] for o in options}
-    vote_counts = {o["option"]: 0 for o in options}
+    vote_counts = {o["id"]: 0 for o in options}
+    for v in all_votes:
+        vote_counts[v["selected_option_id"]] = v["count"]
 
-    for vote in all_votes:
-        option_text = option_map.get(vote["selected_option_id"])
-        if option_text:
-            vote_counts[option_text] += 1
-
-    total_votes = sum(vote_counts.values())
-    results     = []
-    for option_text, count in vote_counts.items():
+    results = []
+    for o in options:
+        count      = vote_counts.get(o["id"], 0)
         percentage = round((count / total_votes * 100), 1) \
                      if total_votes > 0 else 0
         results.append({
-            "option":     option_text,
+            "option":     o["option"],
             "votes":      count,
             "percentage": percentage
         })
 
-    end_dt     = datetime.fromisoformat(poll["end_time"])
+    end_dt     = datetime.fromisoformat(
+        poll["end_time"].replace("T"," ")[:19]
+    )
     is_expired = datetime.now() > end_dt
 
     return jsonify({

@@ -1,33 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- !! MUST BE FIRST — prevents sidebar flash !! -->
+    <script>
+        if (localStorage.getItem("sidebarCollapsed") === "true") {
+            document.documentElement
+                    .classList.add("sidebar-pre-collapsed");
+        }
+    </script>
+    <style>
+        .sidebar-pre-collapsed #dbSidebar {
+            width: 60px !important;
+            transition: none !important;
+        }
+        .sidebar-pre-collapsed #dbMain {
+            margin-left: 60px !important;
+            transition: none !important;
+        }
+        /* Hide text instantly when pre-collapsed */
+        .sidebar-pre-collapsed #dbSidebar span {
+            display: none !important;
+        }
+        .sidebar-pre-collapsed #dbSidebar .db-nav-item {
+            justify-content: center !important;
+            padding: 12px !important;
+        }
+    </style>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dashboard — PulsePoll{% endblock %}</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Dashboard CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 
     {% block extra_css %}{% endblock %}
 </head>
 <body class="db-body">
 
-    <!-- ── Navbar ─────────────────────────────────── -->
+    <!-- ── Navbar ────────────────────────────────── -->
     <nav class="db-navbar">
         <div class="db-navbar-left">
             <i class="bi bi-bar-chart-line-fill"
                style="color:#a5b4fc; font-size:1.3rem;"></i>
             <span class="db-brand">
-                <span class="db-brand-pulse">Pulse</span><span class="db-brand-poll">Poll</span>
+                <span class="db-brand-pulse">Pulse</span>
+                <span class="db-brand-poll">Poll</span>
             </span>
         </div>
 
@@ -44,41 +64,87 @@
         </div>
     </nav>
 
-   <!-- ── Layout Wrapper ─────────────────────────── -->
-<div class="db-wrapper">
+    <!-- ── Layout Wrapper ───────────────────────── -->
+    <div class="db-wrapper">
 
-    <!-- ── Sidebar ────────────────────────────── -->
-    <aside class="db-sidebar">          <!-- ← THIS WAS MISSING -->
-        <nav class="db-sidebar-nav">
+        <!-- ── Sidebar ──────────────────────────── -->
+        <aside class="db-sidebar" id="dbSidebar">
+            <nav class="db-sidebar-nav">
 
-            <!-- Dashboard -->
-            <a href="/dashboard"
-               class="db-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Dashboard</span>
-            </a>
+                <a href="/dashboard"
+                   class="db-nav-item
+                   {% if active_page == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
 
-            <!-- Polls -->
-            <a href="/dashboard/polls"
-               class="db-nav-item {% if active_page == 'polls' %}active{% endif %}">
-                <i class="bi bi-bar-chart-line-fill"></i>
-                <span>Polls</span>
-            </a>
+                <a href="/dashboard/polls"
+                   class="db-nav-item
+                   {% if active_page == 'polls' %}active{% endif %}">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                    <span>Polls</span>
+                </a>
 
-        </nav>
-    </aside>                            <!-- ← AND CLOSING TAG -->
+            </nav>
 
-    <!-- ── Main Content ───────────────────────── -->
-    <main class="db-main">
-        {% block content %}{% endblock %}
-    </main>
+            <button class="db-sidebar-toggle"
+                    id="sidebarToggle"
+                    onclick="toggleSidebar()"
+                    title="Toggle Sidebar">
+                <i class="bi bi-chevron-left" id="toggleIcon"></i>
+            </button>
 
-</div>
+        </aside>
 
+        <!-- ── Main Content ─────────────────────── -->
+        <main class="db-main" id="dbMain">
+            {% block content %}{% endblock %}
+        </main>
 
-    <!-- Bootstrap JS -->
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
+
+    <script>
+    function toggleSidebar() {
+        const sidebar     = document.getElementById("dbSidebar");
+        const main        = document.getElementById("dbMain");
+        const icon        = document.getElementById("toggleIcon");
+        const isCollapsed = sidebar.classList.contains("collapsed");
+
+        if (isCollapsed) {
+            sidebar.classList.remove("collapsed");
+            main.classList.remove("collapsed");
+            icon.className = "bi bi-chevron-left";
+            localStorage.setItem("sidebarCollapsed", "false");
+        } else {
+            sidebar.classList.add("collapsed");
+            main.classList.add("collapsed");
+            icon.className = "bi bi-chevron-right";
+            localStorage.setItem("sidebarCollapsed", "true");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const isCollapsed = localStorage.getItem("sidebarCollapsed");
+
+        if (isCollapsed === "true") {
+            const sidebar = document.getElementById("dbSidebar");
+            const main    = document.getElementById("dbMain");
+            const icon    = document.getElementById("toggleIcon");
+
+            if (sidebar) sidebar.classList.add("collapsed");
+            if (main)    main.classList.add("collapsed");
+            if (icon)    icon.className = "bi bi-chevron-right";
+        }
+
+        // Always remove pre-collapsed after DOM ready
+        // re-enables smooth transitions for clicks
+        document.documentElement
+                .classList.remove("sidebar-pre-collapsed");
+    });
+    </script>
 
 </body>
 </html>

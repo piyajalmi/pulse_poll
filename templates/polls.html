@@ -1,22 +1,152 @@
-
 {% extends "base.html" %}
 
-{% block title %}Create Poll — PulsePoll{% endblock %}
+{% block title %}Polls — PulsePoll{% endblock %}
 
 {% block content %}
-<div class="polls-grid" style="display: flex; gap: 20px; flex-wrap: wrap;">
-    {% for poll in polls %}
-    <div class="poll-card" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; width: 300px;">
-        <span style="font-size: 0.8rem; color: #666;">Created by: {{ poll['first_name'] }}</span>
-        <h3>{{ poll['question'] }}</h3>
-        
-        <p>Ends on: {{ poll['end_time'] }}</p>
-        
-        <a href="{{ url_for('view_poll', poll_id=poll['id']) }}" 
-           style="display: inline-block; background: #007bff; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px;">
-           View & Vote
-        </a>
+
+<!-- ── Hero ───────────────────────────────────────────── -->
+<section class="pl-hero">
+    <div class="container text-center">
+        <!-- <p class="lp-section-tag">Community</p> -->
+        <h1 class="pl-hero-title">
+            All <span class="lp-highlight">Polls</span>
+        </h1>
+        <p class="pl-hero-sub">
+            {{ total_count }} poll{{ 's' if total_count != 1 }}
+            created by our community.
+            Vote, share and see results live!
+        </p>
     </div>
-    {% endfor %}
-</div>
+</section>
+
+<!-- ── Polls Grid ─────────────────────────────────────── -->
+<section class="pl-section">
+    <div class="container">
+
+        {% if polls %}
+        <div class="row g-4">
+            {% for poll in polls %}
+            <div class="col-lg-3 col-md-6">
+                <div class="pl-card">
+
+                    <!-- Status Badge -->
+                    <div class="pl-card-top">
+                        <span class="mp-badge
+                            {% if poll.status == 'Active' %}
+                                mp-badge-active
+                            {% elif poll.status == 'Not Started' %}
+                                mp-badge-not-started
+                            {% else %}
+                                mp-badge-expired
+                            {% endif %}">
+                            <i class="bi bi-circle-fill me-1"
+                               style="font-size:0.4rem;"></i>
+                            {{ poll.status }}
+                        </span>
+                    </div>
+
+                    <!-- Question -->
+                    <div class="pl-card-body">
+                        <h6 class="pl-question">
+                            {{ poll.question }}
+                        </h6>
+                    </div>
+
+                    <!-- Meta -->
+                    <div class="pl-card-meta">
+                        <span class="pl-meta-item">
+                            <i class="bi bi-person me-1"></i>
+                            {{ poll.first_name }}
+                            {{ poll.last_name }}
+                        </span>
+                        <span class="pl-meta-item">
+                            <i class="bi bi-clock me-1"></i>
+                            {{ poll.end_time[:16].replace('T',' ') }}
+                        </span>
+                        <span class="pl-meta-item">
+                            <i class="bi bi-hand-index-thumb me-1"></i>
+                            {{ poll.vote_count }} votes
+                        </span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="pl-card-actions">
+
+                        {% if poll.status != 'Expired' %}
+                        <a href="/poll/{{ poll.id }}"
+                           class="pl-btn-vote">
+                            <i class="bi bi-hand-index-thumb-fill me-1"></i>
+                            Vote
+                        </a>
+                        {% endif %}
+
+                        <a href="/poll/{{ poll.id }}/results"
+                           class="pl-btn-results">
+                            <i class="bi bi-bar-chart-fill me-1"></i>
+                            Results
+                        </a>
+
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ── Pagination ──────────────────────────────── -->
+        {% if total_pages > 1 %}
+        <div class="pl-pagination">
+
+            <!-- Previous -->
+            {% if current_page > 1 %}
+            <a href="/polls?page={{ current_page - 1 }}"
+               class="pl-page-btn">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% endif %}
+
+            <!-- Page numbers -->
+            {% for p in range(1, total_pages + 1) %}
+            <a href="/polls?page={{ p }}"
+               class="pl-page-btn
+                      {% if p == current_page %}pl-page-active{% endif %}">
+                {{ p }}
+            </a>
+            {% endfor %}
+
+            <!-- Next -->
+            {% if current_page < total_pages %}
+            <a href="/polls?page={{ current_page + 1 }}"
+               class="pl-page-btn">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% endif %}
+
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-5">
+            <i class="bi bi-clipboard-x"
+               style="font-size:3rem; color:#cbd5e1;"></i>
+            <p class="mt-3"
+               style="color:#94a3b8; font-weight:500;">
+                No polls yet. Be the first to create one!
+            </p>
+            {% if session.get('user_id') %}
+            <a href="/create" class="btn btn-pp-primary mt-2">
+                Create Poll
+            </a>
+            {% else %}
+            <a href="/signup" class="btn btn-pp-primary mt-2">
+                Sign Up to Create
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
 {% endblock %}

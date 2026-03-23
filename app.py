@@ -5,6 +5,8 @@ from flask_socketio import SocketIO
 from config import Config
 from models import get_db_connection, init_db
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 # ── Create Flask app ──────────────────────────────────────
 app = Flask(__name__)
@@ -42,6 +44,10 @@ def make_session_permanent():
 @app.route('/login')
 def login():
     return render_template('login.html')
+
+@app.route('/faqs')
+def faqs():
+    return render_template('faqs.html')
 
 @app.route('/dashboard')
 def dashboard():
@@ -90,7 +96,7 @@ def dashboard():
         FROM polls p
         LEFT JOIN votes v ON v.poll_id = p.id
         LEFT JOIN users u ON u.id = p.user_id 
-        WHERE p.status = 1
+        WHERE p.status = 1 
         GROUP BY p.id
         ORDER BY p.created_at DESC
         LIMIT 5
@@ -265,6 +271,46 @@ def delete_poll(poll_id):
 
     return jsonify({"message": "Poll deleted"}), 200
 
+@app.route('/polls')
+def polls_list():
+    page = request.args.get('page', 1, type=int)
+    per_page = 8
+    offset = (page - 1) * per_page
+
+    conn = get_db_connection()
+    total_count = conn.execute("SELECT COUNT(*) FROM polls WHERE status = 1").fetchone()[0]
+    polls = conn.execute("""
+        SELECT 
+            p.id,
+            p.question,
+            p.start_time,
+            p.end_time,
+            u.first_name,         
+            u.last_name,
+            COUNT(v.id) as vote_count,
+            CASE 
+                WHEN datetime(p.end_time) <= datetime('now', 'localtime')
+                    THEN 'Expired'
+                 WHEN datetime(p.start_time) > datetime('now', 'localtime')
+                    THEN 'Not Started'
+                ELSE 'Active'
+            END as status
+        FROM polls p
+        LEFT JOIN votes v ON v.poll_id = p.id
+        LEFT JOIN users u ON u.id = p.user_id 
+        WHERE p.status = 1 
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+        LIMIT ? OFFSET ?
+    """, (per_page, offset)).fetchall()
+    conn.close()
+    total_pages = (total_count + per_page - 1) // per_page
+    return render_template('polls.html', polls=  polls,
+                           current_page = page,
+                           total_pages = total_pages,
+                           total_count = total_count)
+
+
 @app.route('/login_validation', methods=['POST'])
 def login_validation():
     email    = request.form.get('email')
@@ -329,16 +375,16 @@ def add_user():
         return redirect(url_for('login'))
 
 
-@app.route('/polls')
-def polls_list():
-    conn = get_db_connection()
-    all_polls = conn.execute("""
-        SELECT polls.*, users.first_name, users.last_name
-        FROM polls
-        JOIN users ON polls.user_id = users.id
-    """).fetchall()                     # ← was fetchone(), fixed to fetchall()
-    conn.close()
-    return render_template('polls.html', polls=all_polls)
+# @app.route('/polls')
+# def polls_list():
+#     conn = get_db_connection()
+#     all_polls = conn.execute("""
+#         SELECT polls.*, users.first_name, users.last_name
+#         FROM polls
+#         JOIN users ON polls.user_id = users.id
+#     """).fetchall()                     # ← was fetchone(), fixed to fetchall()
+#     conn.close()
+#     return render_template('polls.html', polls=all_polls)
 
 
 @app.route('/logout')

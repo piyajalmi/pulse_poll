@@ -82,6 +82,7 @@ main {
 
 /* ── Cards ────────────────────────────────────────────── */
 .pp-card {
+    margin-bottom: 20px;
     background: #ffffff;
     border-radius: 20px;
     box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
@@ -90,11 +91,98 @@ main {
 }
 
 /* ── Footer ───────────────────────────────────────────── */
-.pp-footer {
-    background-color: #ffffff;
-    color: #94a3b8;
-    border-top: 1px solid #e2e8f0;
+.pp-footer-new {
+    background: rgba(20, 15, 60, 0.97);
+    padding: 60px 0 0 0;
     margin-top: auto;
+}
+
+/* ── Brand ────────────────────────────────────────────── */
+.pf-brand {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.pf-pulse { color: #ffffff; }
+.pf-poll  { color: #a5b4fc; }
+
+.pf-tagline {
+    color: #94a3b8;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    max-width: 260px;
+}
+
+/* ── Column Title ─────────────────────────────────────── */
+.pf-col-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── Links ────────────────────────────────────────────── */
+.pf-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pf-link {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.pf-link:hover {
+    color: #a5b4fc;
+}
+
+.pf-link i {
+    font-size: 0.7rem;
+}
+
+/* ── Tech Pills ───────────────────────────────────────── */
+.pf-tech-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pf-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #c7d2fe;
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+/* ── Bottom Bar ───────────────────────────────────────── */
+.pf-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 40px;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #64748b;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 /* ── Hero Section (Landing Page) ─────────────────────── */
@@ -604,4 +692,799 @@ main {
 .mp-badge-not-started {
     background: #fef9c3;
     color: #854d0e;
+}
+
+
+
+
+.main-container {
+    text-align: center;
+    width: 100%;
+}
+
+.content-box {
+    background-color: #ffffff;
+    padding: 40px;
+    /* border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+    display: inline-block;
+    text-align: left;
+    max-width: 500px;
+    width: 90%;
+}
+
+h1 {
+    font-size: 2.5rem;
+    /* Gradient color for "Decide Together" */
+    background: linear-gradient(to right, #ff6b6b, #ffa07a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #888;
+    margin-top: 0;
+    margin-bottom: 2rem;
+}
+
+.steps-list {
+    list-style-type: none;
+    padding: 0;
+    counter-reset: step-counter;
+}
+
+.steps-list li {
+    margin-bottom: 1rem;
+    padding-left: 2.5rem;
+    position: relative;
+    color: #555;
+}
+
+.steps-list li::before {
+    content: counter(step-counter);
+    counter-increment: step-counter;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: #f1f1f1;
+    color: #333;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* ══════════════════════════════════════════════════════
+   LANDING PAGE SECTIONS
+   ══════════════════════════════════════════════════════ */
+
+/* ── Section shared styles ────────────────────────────── */
+.lp-section-tag {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4f46e5;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.lp-section-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #1e1b4b;
+    line-height: 1.2;
+    margin-bottom: 12px;
+}
+
+.lp-highlight {
+    color: #4f46e5;
+}
+
+.lp-section-sub {
+    font-size: 1rem;
+    color: #64748b;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* ── Features Section ─────────────────────────────────── */
+.lp-features-section {
+    padding: 80px 0;
+    background: linear-gradient(
+        180deg,
+        #f0f4ff 0%,
+        #e8eaff 100%
+    );
+}
+
+/* ── Feature Card ─────────────────────────────────────── */
+.lp-feature-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 32px 28px;
+    height: 100%;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.lp-feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Feature Icon ─────────────────────────────────────── */
+.lp-feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+}
+
+/* Icon color variants */
+.lp-icon-purple {
+    background: #ede9fe;
+    color: #4f46e5;
+}
+
+.lp-icon-blue {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.lp-icon-green {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.lp-icon-orange {
+    background: #ffedd5;
+    color: #ea580c;
+}
+
+.lp-icon-cyan {
+    background: #cffafe;
+    color: #0891b2;
+}
+
+.lp-icon-pink {
+    background: #fce7f3;
+    color: #db2777;
+}
+
+/* Card bottom border matches icon color on hover */
+.lp-feature-card:has(.lp-icon-purple):hover {
+    border-bottom-color: #4f46e5;
+}
+
+.lp-feature-card:has(.lp-icon-blue):hover {
+    border-bottom-color: #2563eb;
+}
+
+.lp-feature-card:has(.lp-icon-green):hover {
+    border-bottom-color: #16a34a;
+}
+
+.lp-feature-card:has(.lp-icon-orange):hover {
+    border-bottom-color: #ea580c;
+}
+
+.lp-feature-card:has(.lp-icon-cyan):hover {
+    border-bottom-color: #0891b2;
+}
+
+.lp-feature-card:has(.lp-icon-pink):hover {
+    border-bottom-color: #db2777;
+}
+
+/* ── Feature Text ─────────────────────────────────────── */
+.lp-feature-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    margin-bottom: 10px;
+}
+
+.lp-feature-desc {
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── About Section ────────────────────────────────────── */
+.lp-about-section {
+    padding: 80px 0;
+    background: #ffffff;
+}
+
+.lp-about-text {
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 16px;
+}
+
+/* ── Highlights list ──────────────────────────────────── */
+.lp-about-highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.lp-about-highlight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1e1b4b;
+}
+
+.lp-about-highlight i {
+    color: #4f46e5;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* ── Right side visual container ─────────────────────── */
+.lp-about-visual {
+    position: relative;
+    padding: 40px 20px;
+}
+
+/* ── Mock Poll Card ───────────────────────────────────── */
+.lp-mock-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
+    border: 1px solid #e2e8f0;
+    position: relative;
+    z-index: 1;
+}
+
+.lp-mock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.lp-mock-badge {
+    background: #ecfdf5;
+    color: #065f46;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.lp-mock-votes {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.lp-mock-question {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+/* ── Mock option rows ─────────────────────────────────── */
+.lp-mock-option {
+    margin-bottom: 14px;
+}
+
+.lp-mock-option-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.lp-mock-bar-bg {
+    background: #f1f5f9;
+    border-radius: 50px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.lp-mock-bar {
+    height: 100%;
+    border-radius: 50px;
+    transition: width 0.6s ease;
+}
+
+/* ── Floating badges ──────────────────────────────────── */
+.lp-float-badge {
+    position: absolute;
+    background: #ffffff;
+    border-radius: 50px;
+    padding: 10px 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e1b4b;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.lp-float-top {
+    top: 10px;
+    right: 0px;
+}
+
+.lp-float-bottom {
+    bottom: 10px;
+    left: 0px;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+    .lp-section-title {
+        font-size: 1.7rem;
+    }
+
+    .lp-float-badge {
+        display: none;    /* hide on mobile, too cramped */
+    }
+
+    .lp-about-visual {
+        padding: 20px 0;
+    }
+}
+
+/* ── Contact Section ──────────────────────────────────── */
+.lp-contact-section {
+    padding: 80px 0;
+    background: linear-gradient(
+        180deg,
+        #f0f4ff 0%,
+        #e8eaff 100%
+    );
+}
+
+/* ── Contact Card ─────────────────────────────────────── */
+.lp-contact-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 8px 40px rgba(99, 102, 241, 0.1);
+}
+
+/* ── Labels ───────────────────────────────────────────── */
+.lp-contact-label {
+    font-weight: 600;
+    color: #1e1b4b;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* ── Inputs + Textarea ────────────────────────────────── */
+.lp-contact-input {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    width: 100%;
+    color: #1e1b4b;
+}
+
+.lp-contact-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+    outline: none;
+}
+
+.lp-contact-input::placeholder {
+    color: #94a3b8;
+}
+
+/* ── Error messages ───────────────────────────────────── */
+.lp-contact-error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 6px;
+}
+
+/* ── Success message ──────────────────────────────────── */
+.lp-contact-success {
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+    color: #065f46;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+    .lp-contact-card {
+        padding: 24px 20px;
+    }
+}
+
+/* ── FAQ Hero ─────────────────────────────────────────── */
+.faq-hero {
+    padding: 80px 0 60px 0;
+    background: linear-gradient(
+        135deg,
+        rgba(20, 15, 60, 0.95) 0%,
+        rgba(60, 40, 140, 0.85) 100%
+    ),
+    url('/static/images/hero-bg.png');
+    background-size: cover;
+    background-position: center;
+}
+
+.faq-hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+.faq-hero-sub {
+    color: #c7d2fe;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.faq-contact-link {
+    color: #a5b4fc;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid #a5b4fc;
+    transition: color 0.2s;
+}
+
+.faq-contact-link:hover {
+    color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+/* ── FAQ Section ──────────────────────────────────────── */
+.faq-section {
+    padding: 60px 0 80px 0;
+    background: #f0f4ff;
+}
+
+/* ── FAQ Accordion Item ───────────────────────────────── */
+.faq-item {
+    background: #ffffff;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    transition: box-shadow 0.2s;
+}
+
+.faq-item:hover {
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.12);
+}
+
+/* ── FAQ Button (question row) ────────────────────────── */
+.faq-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 20px 24px;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e1b4b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: background 0.15s;
+}
+
+.faq-btn:hover {
+    background: #f8fafc;
+}
+
+/* Active/open state */
+.faq-btn:not(.collapsed) {
+    color: #4f46e5;
+    background: #f5f3ff;
+}
+
+/* ── FAQ Icon ─────────────────────────────────────────── */
+.faq-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #ede9fe;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.faq-btn:not(.collapsed) .faq-icon {
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+/* ── FAQ Body (answer) ────────────────────────────────── */
+.faq-body {
+    padding: 0 24px 20px 74px;
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+/* ── Bottom CTA ───────────────────────────────────────── */
+.faq-cta {
+    text-align: center;
+    margin-top: 48px;
+    padding: 40px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+}
+
+.faq-cta p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e1b4b;
+    margin-bottom: 16px;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+    .faq-hero-title {
+        font-size: 2rem;
+    }
+
+    .faq-body {
+        padding: 0 16px 20px 16px;
+    }
+
+    .faq-btn {
+        padding: 16px;
+    }
+}
+/* ── FAQ Read More ────────────────────────────────────── */
+.faq-read-more-btn {
+    background: none;
+    border: none;
+    color: #4f46e5;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 0;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.faq-read-more-btn:hover {
+    color: #4338ca;
+}
+
+.faq-full {
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+/* ── Polls Page Hero ──────────────────────────────────── */
+.pl-hero {
+    padding: 60px 0 40px 0;
+    background: linear-gradient(
+        135deg,
+        rgba(20, 15, 60, 0.95) 0%,
+        rgba(60, 40, 140, 0.85) 100%
+    ),
+    url('/static/images/hero-bg.png');
+    background-size: cover;
+    background-position: center;
+}
+
+.pl-hero-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.pl-hero-sub {
+    color: #c7d2fe;
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* ──  voter Polls Section ────────────────────────────────────── */
+.pl-section {
+    padding: 48px 0 80px 0;
+    background: #f0f4ff;
+}
+
+/* ── Poll Card ────────────────────────────────────────── */
+.pl-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+    transition: transform 0.2s ease,
+                box-shadow 0.2s ease;
+}
+
+.pl-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Card Top ─────────────────────────────────────────── */
+.pl-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ── Question ─────────────────────────────────────────── */
+.pl-card-body {
+    flex: 1;
+}
+
+.pl-question {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ── Meta ─────────────────────────────────────────────── */
+.pl-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.pl-meta-item {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Action Buttons ───────────────────────────────────── */
+.pl-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.pl-btn-vote {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4f46e5, #818cf8);
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pl-btn-vote:hover {
+    background: linear-gradient(135deg, #4338ca, #6366f1);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.pl-btn-results {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    background: #ede9fe;
+    color: #4f46e5;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pl-btn-results:hover {
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+/* ── Pagination ───────────────────────────────────────── */
+.pl-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 48px;
+}
+
+.pl-page-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #4f46e5;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+    transition: all 0.2s;
+}
+
+.pl-page-btn:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.pl-page-active {
+    background: #4f46e5;
+    color: #ffffff !important;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+    .pl-hero-title {
+        font-size: 2rem;
+    }
 }

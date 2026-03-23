@@ -1,0 +1,283 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Admin Dashboard — PulsePoll{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ────────────────────────────────────── -->
+<div class="db-page-header mb-4">
+    <div>
+        <h4 class="db-page-title">
+            <i class="bi bi-shield-fill me-2"
+               style="color:#4f46e5;"></i>
+            Admin Dashboard
+        </h4>
+        <p class="db-page-subtitle">
+            Platform overview — all users
+        </p>
+    </div>
+</div>
+
+<!-- ── Filter Bar ─────────────────────────────────────── -->
+<div class="admin-filter-bar mb-4">
+    <form method="GET"
+          action="/admin/dashboard"
+          class="admin-filter-form">
+
+        <div class="admin-filter-left">
+            <i class="bi bi-funnel me-2"
+               style="color:#4f46e5;"></i>
+            <span class="admin-filter-label">
+                Filter by user:
+            </span>
+
+            <select name="user_id"
+                    class="admin-filter-select"
+                    onchange="this.form.submit()">
+                <option value="">All Users</option>
+                {% for user in users %}
+                <option value="{{ user.id }}"
+                    {% if filter_user == user.id|string %}
+                    selected
+                    {% endif %}>
+                    {{ user.first_name }} {{ user.last_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if filter_user %}
+        <a href="/admin/dashboard"
+           class="admin-filter-clear">
+            <i class="bi bi-x-circle me-1"></i>
+            Clear Filter
+        </a>
+        {% endif %}
+
+    </form>
+</div>
+
+<!-- ── Stat Cards ─────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+
+    <!-- Total Users -->
+    <div class="col-lg-3 col-md-6">
+        <div class="db-stat-card db-stat-active">
+            <div class="db-stat-left">
+                <span class="db-stat-icon">
+                    <i class="bi bi-people-fill"></i>
+                </span>
+                <span class="db-stat-number">
+                    {{ total_users }}
+                </span>
+                <span class="db-stat-label">
+                    Total Users
+                </span>
+            </div>
+            <div class="db-stat-right">
+                <div class="db-progress-circle">
+                    <svg viewBox="0 0 36 36">
+                        <circle class="db-circle-bg"
+                                cx="18" cy="18" r="15"/>
+                        <circle class="db-circle-fill"
+                                cx="18" cy="18" r="15"
+                                style="--pct:100"/>
+                    </svg>
+                    <div class="db-circle-text">
+                        {{ total_users }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Polls -->
+    <div class="col-lg-3 col-md-6">
+        <div class="db-stat-card db-stat-total">
+            <div class="db-stat-left">
+                <span class="db-stat-icon">
+                    <i class="bi bi-bar-chart-fill"></i>
+                </span>
+                <span class="db-stat-number">
+                    {{ total_polls }}
+                </span>
+                <span class="db-stat-label">
+                    Total Polls
+                </span>
+            </div>
+            <div class="db-stat-right">
+                <div class="db-progress-circle">
+                    <svg viewBox="0 0 36 36">
+                        <circle class="db-circle-bg"
+                                cx="18" cy="18" r="15"/>
+                        <circle class="db-circle-fill"
+                                cx="18" cy="18" r="15"
+                                style="--pct:100"/>
+                    </svg>
+                    <div class="db-circle-text">
+                        {{ total_polls }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Polls -->
+    <div class="col-lg-3 col-md-6">
+        <div class="db-stat-card db-stat-active">
+            <div class="db-stat-left">
+                <span class="db-stat-icon">
+                    <i class="bi bi-lightning-fill"></i>
+                </span>
+                <span class="db-stat-number">
+                    {{ active_polls }}
+                </span>
+                <span class="db-stat-label">
+                    Active Polls
+                </span>
+            </div>
+            <div class="db-stat-right">
+                <div class="db-progress-circle">
+                    <svg viewBox="0 0 36 36">
+                        <circle class="db-circle-bg"
+                                cx="18" cy="18" r="15"/>
+                        <circle class="db-circle-fill"
+                                cx="18" cy="18" r="15"
+                                style="--pct: {{
+                                    ((active_polls /
+                                      total_polls * 100)
+                                     | round | int)
+                                    if total_polls > 0
+                                    else 0
+                                }}"/>
+                    </svg>
+                    <div class="db-circle-text">
+                        {{ ((active_polls / total_polls * 100)
+                            | round | int)
+                           if total_polls > 0 else 0 }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Votes -->
+    <div class="col-lg-3 col-md-6">
+        <div class="db-stat-card db-stat-votes">
+            <div class="db-stat-left">
+                <span class="db-stat-icon">
+                    <i class="bi bi-hand-index-thumb-fill">
+                    </i>
+                </span>
+                <span class="db-stat-number">
+                    {{ total_votes }}
+                </span>
+                <span class="db-stat-label">
+                    Total Votes
+                </span>
+            </div>
+            <div class="db-stat-right">
+                <div class="db-progress-circle">
+                    <svg viewBox="0 0 36 36">
+                        <circle class="db-circle-bg"
+                                cx="18" cy="18" r="15"/>
+                        <circle class="db-circle-fill"
+                                cx="18" cy="18" r="15"
+                                style="--pct:100"/>
+                    </svg>
+                    <div class="db-circle-text">
+                        {{ total_votes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Recent Polls Table ─────────────────────────────── -->
+<div class="db-section-header mb-3">
+    <h6 class="db-section-title">
+        Recent Polls
+        {% if filter_user %}
+        <span class="admin-filter-active-badge">
+            Filtered
+        </span>
+        {% endif %}
+    </h6>
+    <a href="/admin/polls" class="db-section-link">
+        View all →
+    </a>
+</div>
+
+{% if recent_polls %}
+<div class="db-polls-table">
+
+    <!-- Header -->
+    <div class="db-polls-table-header"
+         style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+        <span>Question</span>
+        <span>Created By</span>
+        <span>Status</span>
+        <span>Votes</span>
+        <span>Actions</span>
+    </div>
+
+    <!-- Rows -->
+    {% for poll in recent_polls %}
+    <div class="db-polls-table-row"
+         style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+
+        <span class="db-poll-question">
+            {{ poll.question }}
+        </span>
+
+        <span class="db-poll-votes">
+            <i class="bi bi-person me-1"></i>
+            {{ poll.first_name }} {{ poll.last_name }}
+        </span>
+
+        <span>
+            <span class="db-poll-badge
+                {% if poll.status == 'Active' %}
+                    db-badge-active
+                {% elif poll.status == 'Not Started' %}
+                    mp-badge-not-started
+                {% else %}
+                    mp-badge-expired
+                {% endif %}">
+                {{ poll.status }}
+            </span>
+        </span>
+
+        <span class="db-poll-votes">
+            <i class="bi bi-hand-index-thumb me-1"></i>
+            {{ poll.vote_count }}
+        </span>
+
+        <span class="db-poll-actions">
+            <a href="/poll/{{ poll.id }}/results"
+               class="db-action-btn"
+               title="View Results">
+                <i class="bi bi-bar-chart-fill"></i>
+            </a>
+            <a href="/dashboard/poll/{{ poll.id }}"
+               class="db-action-btn"
+               title="Poll Detail">
+                <i class="bi bi-eye-fill"></i>
+            </a>
+        </span>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% else %}
+<div class="db-empty-state">
+    <i class="bi bi-clipboard-x"></i>
+    <p>No polls found.</p>
+</div>
+{% endif %}
+
+{% endblock %}

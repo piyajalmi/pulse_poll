@@ -1,0 +1,239 @@
+{% extends "admin_base.html" %}
+
+{% block title %}All Polls — Admin PulsePoll{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ────────────────────────────────────── -->
+<div class="db-page-header mb-4">
+    <div>
+        <h4 class="db-page-title">
+            <i class="bi bi-bar-chart-line-fill me-2"
+               style="color:#4f46e5;"></i>
+            All Polls
+        </h4>
+        <p class="db-page-subtitle">
+            {{ total_count }} poll{{ 's' if total_count != 1 }}
+            across all users
+        </p>
+    </div>
+</div>
+
+<!-- ── Filter Bar ─────────────────────────────────────── -->
+<div class="admin-filter-bar mb-4">
+    <form method="GET"
+          action="/admin/polls"
+          class="admin-polls-filter-form"
+          id="pollsFilterForm">
+
+        <!-- User filter -->
+        <div class="admin-filter-group">
+            <label class="admin-filter-label">User</label>
+            <select name="user_id"
+                    class="admin-filter-select"
+                    onchange="this.form.submit()">
+                <option value="">All Users</option>
+                {% for user in users %}
+                <option value="{{ user.id }}"
+                    {% if filter_user == user.id|string %}
+                    selected
+                    {% endif %}>
+                    {{ user.first_name }} {{ user.last_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Status filter -->
+        <div class="admin-filter-group">
+            <label class="admin-filter-label">Status</label>
+            <select name="status"
+                    class="admin-filter-select"
+                    onchange="this.form.submit()">
+                <option value="">All Status</option>
+                <option value="active"
+                    {% if filter_status == 'active' %}
+                    selected{% endif %}>
+                    Active
+                </option>
+                <option value="not_started"
+                    {% if filter_status == 'not_started' %}
+                    selected{% endif %}>
+                    Not Started
+                </option>
+                <option value="expired"
+                    {% if filter_status == 'expired' %}
+                    selected{% endif %}>
+                    Expired
+                </option>
+            </select>
+        </div>
+
+        <!-- Date filter -->
+        <div class="admin-filter-group">
+            <label class="admin-filter-label">Date</label>
+            <input type="date"
+                   name="date"
+                   class="admin-filter-select"
+                   value="{{ filter_date }}"
+                   onchange="this.form.submit()">
+        </div>
+
+        <!-- Clear all filters -->
+        {% if filter_user or filter_status or filter_date %}
+        <a href="/admin/polls"
+           class="admin-filter-clear">
+            <i class="bi bi-x-circle me-1"></i>
+            Clear All
+        </a>
+        {% endif %}
+
+    </form>
+</div>
+
+<!-- ── Polls Table ────────────────────────────────────── -->
+{% if polls %}
+<div class="db-polls-table">
+
+    <!-- Header -->
+    <div class="admin-polls-header">
+        <span>Question</span>
+        <span>Created By</span>
+        <span>Type</span>
+        <span>Status</span>
+        <span>Votes</span>
+        <span>End Time</span>
+        <span>Actions</span>
+    </div>
+
+    <!-- Rows -->
+    {% for poll in polls %}
+    <div class="admin-polls-row">
+
+        <!-- Question -->
+        <span class="db-poll-question">
+            {{ poll.question }}
+        </span>
+
+        <!-- Creator -->
+        <span class="admin-poll-creator">
+            <i class="bi bi-person me-1"></i>
+            {{ poll.first_name }} {{ poll.last_name }}
+        </span>
+
+        <!-- Poll Type -->
+        <span>
+            <span class="admin-type-badge
+                {% if poll.poll_type == 'multiple' %}
+                admin-type-multiple
+                {% else %}
+                admin-type-single
+                {% endif %}">
+                {% if poll.poll_type == 'multiple' %}
+                <i class="bi bi-check2-square me-1"></i>
+                Multiple
+                {% else %}
+                <i class="bi bi-record-circle me-1"></i>
+                Single
+                {% endif %}
+            </span>
+        </span>
+
+        <!-- Status -->
+        <span>
+            <span class="db-poll-badge
+                {% if poll.status == 'Active' %}
+                    db-badge-active
+                {% elif poll.status == 'Not Started' %}
+                    mp-badge-not-started
+                {% else %}
+                    mp-badge-expired
+                {% endif %}">
+                {{ poll.status }}
+            </span>
+        </span>
+
+        <!-- Votes -->
+        <span class="db-poll-votes">
+            <i class="bi bi-hand-index-thumb me-1"></i>
+            {{ poll.vote_count }}
+        </span>
+
+        <!-- End Time -->
+        <span class="admin-poll-time">
+            {{ poll.end_time[:16].replace('T', ' ') }}
+        </span>
+
+        <!-- Actions -->
+        <span class="db-poll-actions">
+            <a href="/poll/{{ poll.id }}/results"
+               class="db-action-btn"
+               title="Results">
+                <i class="bi bi-bar-chart-fill"></i>
+            </a>
+            <a href="/poll/{{ poll.id }}"
+               class="db-action-btn"
+               title="Vote Page">
+                <i class="bi bi-eye-fill"></i>
+            </a>
+        </span>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+<!-- ── Pagination ─────────────────────────────────────── -->
+{% if total_pages > 1 %}
+<div class="pagination-wrapper">
+    <div class="creative-pagination">
+
+        {% if current_page > 1 %}
+        <a href="/admin/polls?page={{ current_page - 1 }}
+                &user_id={{ filter_user }}
+                &status={{ filter_status }}
+                &date={{ filter_date }}"
+           class="page-arrow">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        {% endif %}
+
+        <div class="page-numbers">
+            {% for p in range(1, total_pages + 1) %}
+            <a href="/admin/polls?page={{ p }}
+                    &user_id={{ filter_user }}
+                    &status={{ filter_status }}
+                    &date={{ filter_date }}"
+               class="page-num
+               {% if p == current_page %}active{% endif %}">
+                {{ p }}
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if current_page < total_pages %}
+        <a href="/admin/polls?page={{ current_page + 1 }}
+                &user_id={{ filter_user }}
+                &status={{ filter_status }}
+                &date={{ filter_date }}"
+           class="page-arrow">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        {% endif %}
+
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="db-empty-state">
+    <i class="bi bi-clipboard-x"></i>
+    <p>No polls found matching your filters.</p>
+    <a href="/admin/polls"
+       class="btn btn-pp-primary mt-2">
+        Clear Filters
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

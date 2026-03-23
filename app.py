@@ -1,4 +1,7 @@
 # from select import poll
+import os
+import uuid
+import base64
 import sqlite3
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from flask_socketio import SocketIO
@@ -13,6 +16,11 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.permanent_session_lifetime = timedelta(minutes=30)  
 
+# ── Uploads folder ────────────────────────────────────────
+UPLOADS_FOLDER = os.path.join(
+    os.path.dirname(__file__),
+    'static', 'uploads'
+)
 # ── Initialize SocketIO ───────────────────────────────────
 socketio = SocketIO(app,
                     cors_allowed_origins="*",
@@ -234,7 +242,7 @@ def poll_detail(poll_id):
     """, (poll_id,)).fetchall()           
 
     #step 8 is poll active or expired
-    from datetime import datetime
+    
     end_time_raw = poll['end_time'].replace("T", " ")[:19]  # ← normalize
     end_dt       = datetime.fromisoformat(end_time_raw)
     is_expired   = datetime.now() > end_dt
@@ -249,7 +257,252 @@ def poll_detail(poll_id):
                            total_votes=total_votes,
                            logs=logs,
                            is_expired=is_expired)
- 
+
+# GET /dashboard/poll/<id>/edit ------------
+@app.route('/dashboard/poll/<int:poll_id>/edit')
+def edit_poll(poll_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db_connection()
+
+    #verifying poll belongs to user
+    poll = conn.execute("""
+        SELECT * FROM polls
+        WHERE id = ? AND user_id = ? AND status = 1
+    """, (poll_id, session['user_id'])).fetchone()
+    
+    if not poll:
+        conn.close()
+        return render_template('404.html'), 404
+    
+    #checking poll expiration
+        
+    end_time_raw = poll['end_time'].replace("T", " ")[:19]
+    end_dt       = datetime.fromisoformat(end_time_raw) 
+    if datetime.now() > end_dt:
+        conn.close()
+        flash('Cannot edit expired poll.', 'warning')
+        return redirect(url_for('poll_detail', poll_id=poll_id))
+    
+    #get options withmedia info
+    options = conn.execute("""
+        SELECT
+            o.id,
+            o.option,
+            o.media_id,
+            m.file_path,
+            m.file_type,
+            m.original_name
+        FROM options o
+        LEFT JOIN media m ON m.id = o.media_id
+        WHERE o.poll_id = ? AND o.status = 1
+    """, (poll_id,)).fetchall()
+
+    #counting votes to check if poll_type is locked
+    vote_count = conn.execute("""
+        SELECT COUNT(*) as count FROM votes WHERE poll_id = ?
+    """, (poll_id,)).fetchone()['count']
+    conn.close()
+
+    #convert options to list 
+    options_data = [{
+        'id':            o['id'],
+        'text':          o['option'],
+        'media_id':      o['media_id'],
+        'file_path':     o['file_path'],
+        'file_type':     o['file_type'],
+        'original_name': o['original_name']
+    } for o in options]
+    
+    return render_template('edit_poll.html',
+                           active_page = 'polls',
+                           poll        = poll,
+                           options_data     = options_data,
+                           vote_count  = vote_count)
+
+
+# ── POST /dashboard/poll/<id>/edit ───────────────────────
+@app.route('/dashboard/poll/<int:poll_id>/edit',
+           methods=['POST'])
+def edit_poll_submit(poll_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+
+    question   = data.get("question", "").strip()
+    end_time   = data.get("end_time", "")
+    poll_type  = data.get("poll_type", "single")
+    options    = data.get("options", [])
+
+    # ── Validate ──────────────────────────────────────────
+    if not question:
+        return jsonify({
+            "error": "Question is required."
+        }), 400
+
+    valid_options = [o for o in options
+                     if o.get("text", "").strip()]
+    if len(valid_options) < 2:
+        return jsonify({
+            "error": "At least 2 options required."
+        }), 400
+
+    try:
+        end_dt = datetime.fromisoformat(end_time)
+        if end_dt <= datetime.now():
+            return jsonify({
+                "error": "End time must be in the future."
+            }), 400
+    except ValueError:
+        return jsonify({"error": "Invalid end time."}), 400
+
+    conn = get_db_connection()
+
+    # Verify ownership
+    poll = conn.execute("""
+        SELECT * FROM polls
+        WHERE id = ? AND user_id = ? AND status = 1
+    """, (poll_id, session['user_id'])).fetchone()
+
+    if not poll:
+        conn.close()
+        return jsonify({"error": "Poll not found."}), 404
+
+    # Check vote count for poll_type lock
+    vote_count = conn.execute("""
+        SELECT COUNT(*) as count FROM votes
+        WHERE poll_id = ?
+    """, (poll_id,)).fetchone()['count']
+
+    try:
+        # ── Update poll ───────────────────────────────────
+        if vote_count == 0:
+            # Can update poll_type if no votes
+            conn.execute("""
+                UPDATE polls
+                SET question=?, end_time=?, poll_type=?
+                WHERE id=?
+            """, (question, end_time, poll_type, poll_id))
+        else:
+            # Lock poll_type if votes exist
+            conn.execute("""
+                UPDATE polls
+                SET question=?, end_time=?
+                WHERE id=?
+            """, (question, end_time, poll_id))
+
+        # ── Process options ───────────────────────────────
+        os.makedirs(UPLOADS_FOLDER, exist_ok=True)
+
+        for opt in valid_options:
+            option_id  = opt.get("id")       # existing or None
+            text       = opt.get("text", "").strip()
+            file_data  = opt.get("file_data")
+            file_name  = opt.get("file_name")
+            file_type  = opt.get("file_type")
+            file_size  = opt.get("file_size", 0)
+            remove_file = opt.get("remove_file", False)
+            media_id   = opt.get("media_id")
+
+            # ── Handle file ───────────────────────────────
+            new_media_id = media_id  # keep existing by default
+
+            if remove_file:
+                # User removed file → set media_id to NULL
+                new_media_id = None
+
+            elif file_data and file_name:
+                # New file uploaded → save it
+                ext         = os.path.splitext(file_name)[1].lower()
+                unique_name = f"{uuid.uuid4()}{ext}"
+                file_path   = os.path.join(
+                    UPLOADS_FOLDER, unique_name
+                )
+                file_bytes  = base64.b64decode(file_data)
+
+                with open(file_path, 'wb') as f:
+                    f.write(file_bytes)
+
+                media_cursor = conn.execute("""
+                    INSERT INTO media (file_name, file_path,
+                                      file_type, file_size,
+                                      original_name,
+                                      created_at, created_id,
+                                      status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                """, (
+                    unique_name,
+                    f"uploads/{unique_name}",
+                    file_type,
+                    file_size,
+                    file_name,
+                    datetime.now().isoformat(),
+                    session.get('user_id')
+                ))
+                new_media_id = media_cursor.lastrowid
+
+            # ── Existing option → UPDATE ──────────────────
+            if option_id:
+                conn.execute("""
+                    UPDATE options
+                    SET option=?, media_id=?
+                    WHERE id=? AND poll_id=?
+                """, (text, new_media_id, option_id, poll_id))
+
+            # ── New option → INSERT ───────────────────────
+            else:
+                conn.execute("""
+                    INSERT INTO options
+                    (poll_id, option, media_id,
+                     status, created_at, created_id)
+                    VALUES (?, ?, ?, 1, ?, ?)
+                """, (
+                    poll_id,
+                    text,
+                    new_media_id,
+                    datetime.now().isoformat(),
+                    session.get('user_id')
+                ))
+
+        # ── Soft delete removed options ───────────────────
+        kept_ids = [o.get("id") for o in valid_options
+                    if o.get("id")]
+
+        if kept_ids:
+            placeholders = ",".join("?" * len(kept_ids))
+            conn.execute(f"""
+                UPDATE options SET status = 0
+                WHERE poll_id = ?
+                AND id NOT IN ({placeholders})
+            """, [poll_id] + kept_ids)
+        else:
+            # All options are new — soft delete old ones
+            conn.execute("""
+                UPDATE options SET status = 0
+                WHERE poll_id = ?
+            """, (poll_id,))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        print(f"Edit poll error: {e}")
+        return jsonify({
+            "error": "Failed to update poll."
+        }), 500
+
+    finally:
+        conn.close()
+
+    return jsonify({
+        "message": "Poll updated successfully!"
+    }), 200   
+
+
+
+
 @app.route('/dashboard/poll/<int:poll_id>/delete', methods=['POST'])
 def delete_poll(poll_id):
     if 'user_id' not in session:

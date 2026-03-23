@@ -80,6 +80,14 @@
             <div class="mp-card-actions">
 
                 {% if poll.status == 'Active'  or poll.status == 'Not Started'%}
+
+                <!-- Edit button -->
+    <a href="/dashboard/poll/{{ poll.id }}/edit"
+       class="mp-btn-edit">
+        <i class="bi bi-pencil-fill me-1"></i>
+        Edit
+    </a>
+
                 <!-- Delete only for active polls -->
                 <button class="mp-btn-delete"
                         onclick="confirmDelete({{ poll.id }}, '{{ poll.question[:30] }}')">

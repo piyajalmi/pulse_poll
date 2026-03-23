@@ -95,7 +95,7 @@
 .db-sidebar {
     width: 180px;
     background: #ffffff;
-    border-right: 3px solid #e2e8f0;
+    border-right: 2px solid #e2e8f0;
     position: fixed;
     top: 64px;
     left: 0;
@@ -103,6 +103,7 @@
     padding: 24px 8px;        /* ← top padding back to 24px */
     overflow-y: auto;
     box-shadow: 4px 0 12px rgba(0,0,0,0.06);
+    transition: width 0.3s ease;
 }
 
 
@@ -348,11 +349,12 @@
     color: #4f46e5;
     border: none;
     border-radius: 50px;
-    padding: 8px 20px;
+    padding: 6px 16px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.2s;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .db-main .btn-pp-add-option:hover {
@@ -1125,4 +1127,279 @@
 .mp-badge-not-started {
     background: #fef9c3;
     color: #854d0e;
+}
+
+
+
+.db-sidebar.collapsed {
+    width: 60px;                    /* icon only width */
+}
+
+/* Hide text labels when collapsed */
+.db-sidebar.collapsed .db-nav-item span,
+.db-sidebar.collapsed .db-nav-group span {
+    display: none;
+}
+
+/* Center icons when collapsed */
+.db-sidebar.collapsed .db-nav-item {
+    justify-content: center;
+    padding: 12px;
+}
+
+/* Hide chevron arrow on polls toggle when collapsed */
+.db-sidebar.collapsed .db-chevron {
+    display: none;
+}
+
+/* Hide submenu when collapsed */
+.db-sidebar.collapsed .db-submenu {
+    display: none;
+}
+
+/* Main content adjusts with sidebar */
+.db-main {
+    transition: margin-left 0.3s ease;
+}
+
+.db-main.collapsed {
+    margin-left: 60px;
+}
+
+/* ── Toggle Button ────────────────────────────────────── */
+.db-sidebar-toggle {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    color: #4f46e5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.1);
+}
+
+.db-sidebar-toggle:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+}
+
+/* ── Poll Type Selector ───────────────────────────────── */
+.cp-type-row {
+    display: flex;
+    gap: 16px;
+}
+
+/* Hide default radio button */
+.cp-type-option input[type="radio"] {
+    display: none;
+}
+
+/* The card itself */
+.cp-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 20px 32px;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    min-width: 160px;
+    text-align: center;
+}
+
+.cp-type-card i {
+    font-size: 1.8rem;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.cp-type-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1e1b4b;
+}
+
+.cp-type-desc {
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+/* Hover state */
+.cp-type-option:hover .cp-type-card {
+    border-color: #818cf8;
+    background: #f5f3ff;
+}
+
+.cp-type-option:hover .cp-type-card i {
+    color: #4f46e5;
+}
+
+/* Selected state — when radio is checked */
+.cp-type-option input[type="radio"]:checked + .cp-type-card {
+    border-color: #4f46e5;
+    background: #ede9fe;
+}
+
+.cp-type-option input[type="radio"]:checked + .cp-type-card i {
+    color: #4f46e5;
+}
+
+.cp-type-option input[type="radio"]:checked + .cp-type-card
+.cp-type-title {
+    color: #4f46e5;
+}
+
+/* ── Option Row with File Input ───────────────────────── */
+.cp-option-row {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+
+.cp-option-row:focus-within {
+    border-color: #818cf8;
+}
+
+/* Text input inside option row */
+.cp-option-text {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: #1e1b4b;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    padding: 0;
+}
+
+.cp-option-text::placeholder {
+    color: #94a3b8;
+}
+
+/* Top row: text input + remove button */
+.cp-option-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Remove button */
+.cp-remove-btn {
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.cp-remove-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+/* Divider between text and file section */
+.cp-option-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 10px 0;
+}
+
+/* File attach row */
+.cp-file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Hidden real file input */
+.cp-file-input {
+    display: none;
+}
+
+/* Custom file button */
+.cp-file-btn {
+    background: #ffffff;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.cp-file-btn:hover {
+    border-color: #818cf8;
+    color: #4f46e5;
+    background: #f5f3ff;
+}
+
+/* File preview after selection */
+.cp-file-preview {
+    display: none;          /* hidden until file chosen */
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    color: #065f46;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+}
+
+.cp-file-preview.visible {
+    display: flex;          /* shows when file chosen */
+}
+
+.cp-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.cp-file-clear {
+    background: none;
+    border: none;
+    color: #065f46;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.cp-file-clear:hover {
+    color: #ef4444;
 }

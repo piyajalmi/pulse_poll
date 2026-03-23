@@ -21,8 +21,10 @@ def init_db():
             start_time datetime,
             end_time datetime,
             user_id INTEGER, 
+            poll_type  VARCHAR(10) DEFAULT 'single'
+                   CHECK(poll_type IN ('single', 'multiple')),
             created_at TIMESTAMP,
-            created_id INTEGER(10),
+            created_id INTEGER,
             status TINYINT DEFAULT 1,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -32,10 +34,11 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS votes(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            poll_id INTEGER(10),
-            selected_option_id INTEGER(10),
+            poll_id INTEGER,
+            selected_option_id INTEGER,
+            submission_id VARCHAR(40),
             created_at TIMESTAMP,
-            created_id INTEGER(10),
+            created_id INTEGER,
             FOREIGN KEY (poll_id) REFERENCES polls (id),
             FOREIGN KEY (selected_option_id) REFERENCES options (id)
         )
@@ -48,8 +51,7 @@ def init_db():
             vote_id INTEGER(10),
             encrypted_identifier TEXT NOT NULL,
             created_at TIMESTAMP,
-            created_id INTEGER(10),
-            browser VARCHAR(100),
+            created_id INTEGER,
             FOREIGN KEY (vote_id) REFERENCES votes (id)
         )
     """)
@@ -62,20 +64,38 @@ def init_db():
             email varchar(100),
             password varchar(100) NOT NULL,
             created_at TIMESTAMP,
-            created_id INTEGER(10),
+            created_id INTEGER,
             status TINYINT
         ) 
      """)
     #table 5:
     cursor.execute(""" CREATE TABLE IF NOT EXISTS options(id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                            poll_id INTEGER(10),
+                                            poll_id INTEGER,
                                             option TEXT,
+                                            media_id INTEGER,
                                             status TINYINT,
                                             created_at TIMESTAMP,
-                                            created_id INTEGER(10),
-                                            FOREIGN KEY (poll_id) REFERENCES polls (id))"""
-                   )
+                                            created_id INTEGER,
+                                            FOREIGN KEY (poll_id) REFERENCES polls (id),
+                                            FOREIGN KEY (media_id) REFERENCES media(id)
+                                             )
+                                         """) 
 
+    #table 6:
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS media (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_name     VARCHAR(255),
+            file_path     VARCHAR(500),
+            file_type     VARCHAR(100),
+            file_size     INTEGER,
+            original_name VARCHAR(255),
+            created_at    TIMESTAMP,
+            created_id    INTEGER,
+            status        TINYINT DEFAULT 1,
+            FOREIGN KEY (created_id) REFERENCES users(id)
+        )
+    """)
     conn.commit()#to save changes to the database
     conn.close()
     print("Database initialized successfully.")

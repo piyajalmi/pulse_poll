@@ -1,9 +1,15 @@
-from flask import Blueprint, redirect, request, jsonify, render_template, session, url_for
+from flask import Blueprint, redirect, request, jsonify, \
+                  render_template, session, url_for
 from datetime import datetime
 from models import get_db_connection
-import json
+import base64
+import uuid
+import os
 
 poll_bp = Blueprint('poll', __name__)
+
+# ── Uploads folder path ───────────────────────────────────
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
 
 
 # ── GET / (Landing Page) ──────────────────────────────────
@@ -16,7 +22,7 @@ def index():
 @poll_bp.route("/create")
 def create_poll_page():
     if 'user_name' not in session:
-        return redirect(url_for('login'))          # ← fixed
+        return redirect(url_for('login'))
     return render_template("create_poll.html",
                            active_page='create_poll')
 
@@ -26,26 +32,34 @@ def create_poll_page():
 def create_poll():
     data = request.get_json()
 
-    # ── Step 1: Extract data ───────────────────────────────
+    # ── Step 1: Extract data ──────────────────────────────
     question   = data.get("question", "").strip()
     options    = data.get("options", [])
     start_time = data.get("start_time", "").replace("T", " ")
     end_time   = data.get("end_time", "").replace("T", " ")
+    poll_type  = data.get("poll_type", "single")
 
-    # ── Step 2: Validate ──────────────────────────────────
+    # ── Step 2: Validate poll_type ────────────────────────
+    if poll_type not in ('single', 'multiple'):
+        poll_type = 'single'
+
+    # ── Step 3: Validate inputs ───────────────────────────
     if not question:
-        return jsonify({"error": "Poll question is required."}), 400
+        return jsonify({
+            "error": "Poll question is required."
+        }), 400
 
-    if len(options) < 2:
-        return jsonify({"error": "At least 2 options required."}), 400
-
-    options = [opt.strip() for opt in options if opt.strip()]
+    valid_options = [o for o in options if o.get("text","").strip()]
+    if len(valid_options) < 2:
+        return jsonify({
+            "error": "At least 2 options with text required."
+        }), 400
 
     try:
         start_dt = datetime.fromisoformat(start_time)
         end_dt   = datetime.fromisoformat(end_time)
 
-        if start_dt <= datetime.now():           # ← new check
+        if start_dt <= datetime.now():
             return jsonify({
                 "error": "Start time must be in the future."
             }), 400
@@ -56,34 +70,90 @@ def create_poll():
             }), 400
 
     except ValueError:
-        return jsonify({"error": "Invalid date/time format."}), 400
+        return jsonify({
+            "error": "Invalid date/time format."
+        }), 400
 
-    # ── Step 3: Save poll to DB ───────────────────────────
+    # ── Step 4: Save poll to DB ───────────────────────────
     conn   = get_db_connection()
     cursor = conn.execute("""
         INSERT INTO polls (question, start_time, end_time,
-                           user_id, created_at, created_id)
-        VALUES (?, ?, ?, ?, ?, ?)
+                           user_id, poll_type,
+                           created_at, created_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
         question,
-        start_time,                              # ← form value, not now()!
+        start_time,
         end_time,
         session.get('user_id'),
+        poll_type,
         datetime.now().isoformat(),
         session.get('user_id')
     ))
-
     poll_id = cursor.lastrowid
 
-    # ── Step 4: Insert options ────────────────────────────
-    for option_text in options:
+    # ── Step 5: Process each option ───────────────────────
+    for opt in valid_options:
+        text      = opt.get("text", "").strip()
+        media_id  = None
+
+        # ── Step 5a: Handle file if present ───────────────
+        file_base64 = opt.get("file_base64")
+        if file_base64:
+            try:
+                file_name     = opt.get("file_name", "file")
+                file_type     = opt.get("file_type", "")
+                file_size     = opt.get("file_size", 0)
+
+                # Get file extension from original name
+                _, ext = os.path.splitext(file_name)
+                if not ext:
+                    ext = ".bin"  # fallback extension
+
+                # Generate unique filename using UUID
+                unique_name = f"{uuid.uuid4()}{ext}"
+                file_path   = os.path.join(
+                    UPLOAD_FOLDER, unique_name
+                )
+
+                # Decode base64 and save to disk
+                file_bytes = base64.b64decode(file_base64)
+                with open(file_path, 'wb') as f:
+                    f.write(file_bytes)
+
+                # Insert into media table
+                media_cursor = conn.execute("""
+                    INSERT INTO media (file_name, file_path,
+                                      file_type, file_size,
+                                      original_name,
+                                      created_at, created_id,
+                                      status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                """, (
+                    unique_name,
+                    file_path,
+                    file_type,
+                    file_size,
+                    file_name,
+                    datetime.now().isoformat(),
+                    session.get('user_id')
+                ))
+                media_id = media_cursor.lastrowid
+
+            except Exception as e:
+                print(f"File save error: {e}")
+                # Continue without file if error
+                media_id = None
+
+        # ── Step 5b: Insert option ─────────────────────────
         conn.execute("""
-            INSERT INTO options (poll_id, option, status,
-                                 created_at, created_id)
-            VALUES (?, ?, 1, ?, ?)
+            INSERT INTO options (poll_id, option, media_id,
+                                 status, created_at, created_id)
+            VALUES (?, ?, ?, 1, ?, ?)
         """, (
             poll_id,
-            option_text,
+            text,
+            media_id,
             datetime.now().isoformat(),
             session.get('user_id')
         ))
@@ -91,7 +161,7 @@ def create_poll():
     conn.commit()
     conn.close()
 
-    # ── Step 5: Return poll link ──────────────────────────
+    # ── Step 6: Return response ───────────────────────────
     return jsonify({
         "message":      "Poll created successfully!",
         "poll_id":      poll_id,
@@ -114,34 +184,44 @@ def vote_page(poll_id):
         conn.close()
         return render_template("404.html"), 404
 
+    # Fetch options WITH media info
     options = conn.execute("""
-        SELECT id, option FROM options
-        WHERE poll_id = ? AND status = 1
+        SELECT
+            o.id,
+            o.option,
+            o.media_id,
+            m.file_path,
+            m.file_type,
+            m.original_name
+        FROM options o
+        LEFT JOIN media m ON m.id = o.media_id
+        WHERE o.poll_id = ? AND o.status = 1
     """, (poll_id,)).fetchall()
 
     conn.close()
 
     poll_data = {
-        "id":         poll["id"],
-        "question":   poll["question"],
-        "options":    [{"id": o["id"],
-                        "text": o["option"]} for o in options],
+        "id":        poll["id"],
+        "question":  poll["question"],
+        "poll_type": poll["poll_type"],
+        "options": [{
+            "id":            o["id"],
+            "text":          o["option"],
+            "file_path":     o["file_path"],
+            "file_type":     o["file_type"],
+            "original_name": o["original_name"]
+        } for o in options],
         "start_time": poll["start_time"],
         "end_time":   poll["end_time"],
     }
 
-    now = datetime.now()
-
-    # ── Normalize end_time ────────────────────────────────
+    now         = datetime.now()
     end_time_raw = poll["end_time"].replace("T", " ")[:19]
-    end_dt       = datetime.fromisoformat(end_time_raw)
-    is_expired   = now >= end_dt
+    end_dt      = datetime.fromisoformat(end_time_raw)
+    is_expired  = now >= end_dt
 
-    # ── Safe start_time check ─────────────────────────────
     start_time_raw = poll["start_time"]
-
     if start_time_raw:
-        # Normalize T → space, trim microseconds
         start_time_raw = start_time_raw.replace("T", " ")[:19]
         start_dt       = datetime.fromisoformat(start_time_raw)
         not_started    = now < start_dt
@@ -157,7 +237,7 @@ def vote_page(poll_id):
                            not_started = not_started)
 
 
-# ── GET /poll/<poll_id>/results (Results Page) ────────────
+# ── GET /poll/<poll_id>/results ───────────────────────────
 @poll_bp.route("/poll/<int:poll_id>/results")
 def results_page(poll_id):
     conn = get_db_connection()
@@ -177,8 +257,9 @@ def results_page(poll_id):
         "end_time": poll["end_time"],
     }
 
-    end_dt     = datetime.fromisoformat(poll["end_time"])
-    is_expired = datetime.now() > end_dt
+    end_time_raw = poll["end_time"].replace("T", " ")[:19]
+    end_dt       = datetime.fromisoformat(end_time_raw)
+    is_expired   = datetime.now() > end_dt
 
     return render_template("results.html",
                            poll       = poll_data,

@@ -1,66 +1,120 @@
-// ── Selected option trackers ────────────────────────────
-let selectedOptionId   = null;   // ← was: let selectedOption = ""
-let selectedOptionText = "";     // ← new: track text separately
+// ── State ───────────────────────────────────────────────
+let selectedOptionIds  = [];      // array for multiple choice
+let selectedOptionText = "";      // for modal display
 
-// ── Start countdown timer on page load ─────────────────
+// ── Initialize ──────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
     startTimer();
 });
 
-// ── Select an option ────────────────────────────────────
-function selectOption(element, optionId, optionText) {  // ← added optionId, optionText params
-    // Remove selected from all options
-    document.querySelectorAll(".pp-option")
-            .forEach(opt => opt.classList.remove("selected"));
+// ── Generate UUID (submission_id) ───────────────────────
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+        .replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+}
 
-    // Mark this one as selected
-    element.classList.add("selected");
-    selectedOptionId   = optionId;    // ← was: selectedOption = optionValue
-    selectedOptionText = optionText;  // ← new
+// ── Select / Deselect an option ─────────────────────────
+function selectOption(element, optionId, optionText, pollType) {
 
-    // Hide any previous error
-    document.getElementById("voteError").classList.add("d-none");
+    if (pollType === 'single') {
+        // ── Single choice ──────────────────────────────
+        // Remove selected from ALL options
+        document.querySelectorAll(".pp-option")
+                .forEach(opt => opt.classList.remove("selected"));
+
+        // Select this one
+        element.classList.add("selected");
+        selectedOptionIds  = [optionId];
+        selectedOptionText = optionText;
+
+    } else {
+        // ── Multiple choice ────────────────────────────
+        const index = selectedOptionIds.indexOf(optionId);
+
+        if (index === -1) {
+            // Not selected → ADD it
+            element.classList.add("selected");
+            selectedOptionIds.push(optionId);
+
+            // Update checkbox icon
+            const checkbox = element.querySelector(
+                ".pp-option-checkbox i"
+            );
+            if (checkbox) {
+                checkbox.className = "bi bi-check-square-fill";
+            }
+        } else {
+            // Already selected → REMOVE it
+            element.classList.remove("selected");
+            selectedOptionIds.splice(index, 1);
+
+            // Reset checkbox icon
+            const checkbox = element.querySelector(
+                ".pp-option-checkbox i"
+            );
+            if (checkbox) {
+                checkbox.className = "bi bi-square";
+            }
+        }
+
+        // Update selectedOptionText for modal
+        selectedOptionText = selectedOptionIds.length > 0
+            ? `${selectedOptionIds.length} option(s) selected`
+            : "";
+    }
+
+    // Hide error
+    document.getElementById("voteError")
+            .classList.add("d-none");
 }
 
 // ── Show confirmation modal ─────────────────────────────
 function confirmVote() {
-    if (!selectedOptionId) {    // ← was: if (!selectedOption)
+    if (selectedOptionIds.length === 0) {
         document.getElementById("voteError")
                 .classList.remove("d-none");
         return;
     }
 
-    // Show selected option TEXT in modal
     document.getElementById("confirmOptionText")
-            .textContent = selectedOptionText;  // ← was: selectedOption
+            .textContent = selectedOptionText;
 
-    // Show Bootstrap modal
     const modal = new bootstrap.Modal(
         document.getElementById("confirmModal")
     );
     modal.show();
 }
 
-// ── Submit vote to API ──────────────────────────────────
+// ── Submit vote ─────────────────────────────────────────
 async function submitVote() {
     const btn = document.getElementById("submitVoteBtn");
 
-    // Close the modal
+    // Close modal
     bootstrap.Modal.getInstance(
         document.getElementById("confirmModal")
     ).hide();
 
     // Disable button
-    btn.disabled = true;
+    btn.disabled  = true;
     btn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2"></span>
-        Submitting...`;
+        <span class="spinner-border spinner-border-sm me-2">
+        </span>Submitting...`;
+
+    // Generate unique submission_id
+    const submissionId = generateUUID();
 
     try {
         const response = await fetch(`/poll/${POLL_ID}/vote`, {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ option_id: selectedOptionId })  // ← was: option: selectedOption
+            body:    JSON.stringify({
+                option_ids:    selectedOptionIds,  // ← array
+                submission_id: submissionId        // ← UUID
+            })
         });
 
         const data = await response.json();
@@ -70,7 +124,8 @@ async function submitVote() {
                 <i class="bi bi-check-circle-fill me-2"></i>
                 Vote Submitted!`;
             setTimeout(() => {
-                window.location.href = `/poll/${POLL_ID}/results`;
+                window.location.href =
+                    `/poll/${POLL_ID}/results`;
             }, 1000);
 
         } else {
@@ -79,7 +134,7 @@ async function submitVote() {
                 return;
             }
             alert(data.error);
-            btn.disabled = false;
+            btn.disabled  = false;
             btn.innerHTML = `
                 <i class="bi bi-send-fill me-2"></i>
                 Submit Vote`;
@@ -87,7 +142,7 @@ async function submitVote() {
 
     } catch (error) {
         alert("Network error. Please try again.");
-        btn.disabled = false;
+        btn.disabled  = false;
         btn.innerHTML = `
             <i class="bi bi-send-fill me-2"></i>
             Submit Vote`;
@@ -100,28 +155,20 @@ function startTimer() {
     if (!timerText) return;
 
     function updateTimer() {
-        const now  = new Date();
-        const end  = new Date(END_TIME);
-        const diff = end - now;
-
+        const diff = new Date(END_TIME) - new Date();
         if (diff <= 0) {
             timerText.textContent = "Poll Ended";
             setTimeout(() => location.reload(), 2000);
             return;
         }
-
-        const hours   = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000)   / 1000);
         timerText.textContent =
-            `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+            `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
     }
 
-    function pad(num) {
-        return String(num).padStart(2, "0");
-    }
-
+    function pad(n) { return String(n).padStart(2, "0"); }
     updateTimer();
     setInterval(updateTimer, 1000);
 }

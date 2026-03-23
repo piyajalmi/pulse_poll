@@ -19,7 +19,10 @@ document.addEventListener("DOMContentLoaded", function () {
 function initWebSocket() {
 
     // Connect to the server
-    socket = io();
+    socket = io({
+    transports: ['websocket'],
+    upgrade: false
+});
 
     // ── When connected → join this poll's room ──────────
     socket.on("connect", function () {
@@ -31,7 +34,7 @@ function initWebSocket() {
     socket.on("vote_update", function (data) {
         console.log("Live update received!", data);
 
-        if (data.poll_id === POLL_ID) {
+        if (String(data.poll_id) === String(POLL_ID)) {
             updateChart(data.results);
             updateBreakdown(data.results);
             updateTotalVotes(data.total_votes);

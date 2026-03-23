@@ -1,87 +1,199 @@
-// ── Initialize page with 2 default options ─────────────
+// ── State ───────────────────────────────────────────────
+let optionCount = 0;
+let selectedPollType = 'single';
+
+// ── Initialize on page load ─────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
     addOption();
     addOption();
     setMinDateTime();
 });
 
-// ── Set minimum date/time to now ────────────────────────
+// ── Set poll type ───────────────────────────────────────
+function setPollType(type) {
+    selectedPollType = type;
+}
+
+// ── Set minimum date to today ───────────────────────────
 function setMinDateTime() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById("pollStartDate").min = today;
-    document.getElementById("pollEndDate").min = today;
+    document.getElementById("pollEndDate").min   = today;
 }
 
-// ── Add a new option input row ──────────────────────────
-let optionCount = 0;
-
+// ── Add a new option row ────────────────────────────────
 function addOption() {
     optionCount++;
     const container = document.getElementById("optionsContainer");
+    const row       = document.createElement("div");
 
-    const row = document.createElement("div");
-    row.classList.add("option-row");
+    row.classList.add("cp-option-row");
     row.id = `optionRow${optionCount}`;
 
     row.innerHTML = `
-        <input
-            type="text"
-            class="option-input"
-            placeholder="Option ${optionCount}"
-            maxlength="100">
-        <button
-            class="btn-remove-option"
-            onclick="removeOption('optionRow${optionCount}')"
-            title="Remove option">
-            <i class="bi bi-x"></i>
-        </button>
+        <!-- Text input + remove button -->
+        <div class="cp-option-top">
+            <input type="text"
+                   class="cp-option-text"
+                   id="optionText${optionCount}"
+                   placeholder="Option ${optionCount}">
+            <button class="cp-remove-btn"
+                    type="button"
+                    onclick="removeOption('optionRow${optionCount}')"
+                    title="Remove option">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="cp-option-divider"></div>
+
+        <!-- File attach row -->
+        <div class="cp-file-row">
+
+            <!-- Hidden real file input -->
+            <input type="file"
+                   class="cp-file-input"
+                   id="optionFile${optionCount}"
+                   onchange="handleFileSelect(this, ${optionCount})">
+
+            <!-- Custom styled button -->
+            <button class="cp-file-btn"
+                    type="button"
+                    onclick="document.getElementById('optionFile${optionCount}').click()">
+                <i class="bi bi-paperclip"></i>
+                Attach file
+            </button>
+
+            <!-- File preview (hidden until file chosen) -->
+            <div class="cp-file-preview"
+                 id="filePreview${optionCount}">
+                <i class="bi bi-file-earmark me-1"></i>
+                <span class="cp-file-name"
+                      id="fileName${optionCount}">
+                </span>
+                <button class="cp-file-clear"
+                        type="button"
+                        onclick="clearFile(${optionCount})"
+                        title="Remove file">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
+            </div>
+
+        </div>
     `;
 
     container.appendChild(row);
 }
 
-// ── Remove an option input row ──────────────────────────
+// ── Remove an option row ────────────────────────────────
 function removeOption(rowId) {
-    const allRows = document.querySelectorAll(".option-row");
-
-    // Always keep at least 2 options
+    const allRows = document.querySelectorAll(".cp-option-row");
     if (allRows.length <= 2) {
         alert("A poll must have at least 2 options.");
         return;
     }
-
     const row = document.getElementById(rowId);
     if (row) row.remove();
 }
 
-// ── Collect all option values ───────────────────────────
-function getOptions() {
-    const inputs = document.querySelectorAll(".option-input");
-    const options = [];
-    inputs.forEach(input => {
-        const val = input.value.trim();
-        if (val) options.push(val);
+// ── Handle file selection ───────────────────────────────
+function handleFileSelect(input, count) {
+    const file    = input.files[0];
+    const preview = document.getElementById(`filePreview${count}`);
+    const nameEl  = document.getElementById(`fileName${count}`);
+
+    if (file) {
+        // Show preview with filename
+        nameEl.textContent = file.name;
+        preview.classList.add("visible");
+    } else {
+        clearFile(count);
+    }
+}
+
+// ── Clear file selection ────────────────────────────────
+function clearFile(count) {
+    const input   = document.getElementById(`optionFile${count}`);
+    const preview = document.getElementById(`filePreview${count}`);
+    const nameEl  = document.getElementById(`fileName${count}`);
+
+    input.value      = "";          // clear file input
+    nameEl.textContent = "";
+    preview.classList.remove("visible");
+}
+
+// ── Read file as base64 ─────────────────────────────────
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload  = () => {
+            // result is "data:image/jpeg;base64,/9j/4AAQ..."
+            // we only want the part after the comma
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
     });
+}
+
+// ── Collect all options with text + file data ───────────
+async function collectOptions() {
+    const rows    = document.querySelectorAll(".cp-option-row");
+    const options = [];
+
+    for (const row of rows) {
+        const textInput = row.querySelector(".cp-option-text");
+        const fileInput = row.querySelector(".cp-file-input");
+        const text      = textInput ? textInput.value.trim() : "";
+        const file      = fileInput && fileInput.files[0]
+                          ? fileInput.files[0] : null;
+
+        // Skip completely empty rows
+        if (!text && !file) continue;
+
+        const optionData = {
+            text:          text,
+            file_base64:   null,
+            file_name:     null,
+            file_type:     null,
+            file_size:     null
+        };
+
+        if (file) {
+            // Convert file to base64
+            optionData.file_base64 = await readFileAsBase64(file);
+            optionData.file_name   = file.name;
+            optionData.file_type   = file.type;
+            optionData.file_size   = file.size;
+        }
+
+        options.push(optionData);
+    }
+
     return options;
 }
 
-// ── Validate the form ───────────────────────────────────
-
+// ── Validate form ───────────────────────────────────────
 function validateForm(question, options, startDateTime, endDateTime) {
     let isValid = true;
 
     // Validate question
-    const questionInput = document.getElementById("pollQuestion");
+    const questionError = document.getElementById("questionError");
     if (!question) {
-        questionInput.classList.add("is-invalid");
+        questionError.classList.remove("d-none");
         isValid = false;
     } else {
-        questionInput.classList.remove("is-invalid");
+        questionError.classList.add("d-none");
     }
 
-    // Validate options
-    const optionsError = document.getElementById("optionsError");
-    if (options.length < 2) {
+    // Validate options — need at least 2 with text
+    const optionsError  = document.getElementById("optionsError");
+    const validOptions  = options.filter(o => o.text);
+    if (validOptions.length < 2) {
         optionsError.classList.remove("d-none");
         isValid = false;
     } else {
@@ -90,7 +202,7 @@ function validateForm(question, options, startDateTime, endDateTime) {
 
     // Validate start time
     const startError = document.getElementById("startError");
-    if (!startDateTime) {
+    if (!startDateTime || new Date(startDateTime) <= new Date()) {
         startError.classList.remove("d-none");
         isValid = false;
     } else {
@@ -108,48 +220,48 @@ function validateForm(question, options, startDateTime, endDateTime) {
 
     return isValid;
 }
-// ── Submit the poll to the API ──────────────────────────
+
+// ── Submit poll ─────────────────────────────────────────
 async function submitPoll() {
-    const question   = document.getElementById("pollQuestion")
-                                .value.trim();
-    const options    = getOptions();
+    const question      = document.getElementById("pollQuestion")
+                                  .value.trim();
+    const startDate     = document.getElementById("pollStartDate").value;
+    const startTime     = document.getElementById("pollStartTime").value;
+    const endDate       = document.getElementById("pollEndDate").value;
+    const endTime       = document.getElementById("pollEndTime").value;
+    const btn           = document.getElementById("createPollBtn");
+    const message       = document.getElementById("formMessage");
 
-    // ── Combine date + time into one string ───────────────
-    const startDate  = document.getElementById("pollStartDate").value;
-    const startTime  = document.getElementById("pollStartTime").value;
-    const endDate    = document.getElementById("pollEndDate").value;
-    const endTime    = document.getElementById("pollEndTime").value;
+    // Combine date + time
+    const startDateTime = startDate && startTime
+                          ? `${startDate} ${startTime}` : "";
+    const endDateTime   = endDate && endTime
+                          ? `${endDate} ${endTime}` : "";
 
-    // Format: "2026-03-16T10:00" ← what Flask expects
-    const startDateTime = (startDate && startTime)
-                          ? `${startDate}T${startTime}`
-                          : "";
-    const endDateTime   = (endDate && endTime)
-                          ? `${endDate}T${endTime}`
-                          : "";
+    // Collect options (async because of file reading)
+    const options = await collectOptions();
 
-    const btn     = document.getElementById("createPollBtn");
-    const message = document.getElementById("formMessage");
+    // Validate
+    if (!validateForm(question, options, startDateTime, endDateTime)) {
+        return;
+    }
 
-    // Run validation
-    if (!validateForm(question, options,
-                      startDateTime, endDateTime)) return;
-
-    // Disable button
-    btn.disabled = true;
+    // Disable button + show spinner
+    btn.disabled  = true;
     btn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2">
-        </span>Creating...`;
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Creating...`;
 
     try {
         const response = await fetch("/poll/create", {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body:    JSON.stringify({
                 question:   question,
+                poll_type:  selectedPollType,
                 options:    options,
-                start_time: startDateTime,   // ← sending start
-                end_time:   endDateTime      // ← sending end
+                start_time: startDateTime,
+                end_time:   endDateTime
             })
         });
 
@@ -172,10 +284,9 @@ async function submitPoll() {
                 <i class="bi bi-exclamation-circle-fill me-2"></i>
                 ${data.error}`;
             message.classList.remove("d-none");
-            btn.disabled = false;
+            btn.disabled  = false;
             btn.innerHTML = `
-                <i class="bi bi-send-fill me-2"></i>
-                Create Poll`;
+                <i class="bi bi-send-fill me-2"></i>Create Poll`;
         }
 
     } catch (error) {
@@ -184,9 +295,8 @@ async function submitPoll() {
             <i class="bi bi-wifi-off me-2"></i>
             Network error. Please try again.`;
         message.classList.remove("d-none");
-        btn.disabled = false;
+        btn.disabled  = false;
         btn.innerHTML = `
-            <i class="bi bi-send-fill me-2"></i>
-            Create Poll`;
+            <i class="bi bi-send-fill me-2"></i>Create Poll`;
     }
 }

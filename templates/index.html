@@ -65,17 +65,25 @@
                                 Create Poll
                             </a>
                         {% else %}
-                            <a href="/signup"
+                            <a href="/login"
                                class="btn btn-pp-primary btn-lg">
                                 <i class="bi bi-person-plus me-2"></i>
-                                Sign Up to Create Poll
+                                Create Poll
                             </a>
                         {% endif %}
+                        {% if session.get('user_id') %}
                         <a href="#join"
                            class="btn btn-pp-outline btn-lg">
                             <i class="bi bi-box-arrow-in-right me-2"></i>
                             Join Poll
                         </a>
+                        {% else %}
+                            <a href="/login"
+                               class="btn btn-pp-outline btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                Join Poll
+                            </a>
+                        {% endif %}
                     </div>
 
                 </div>

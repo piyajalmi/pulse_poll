@@ -214,7 +214,7 @@
                     {{ log.id }}
                 </span>
                 <span class="pd-log-enc">
-                    {{ log.encrypted_identifier[:20] }}...
+                    {{ (log.encrypted_identifier or '') [:20] }}...
                 </span>
                 <span class="pd-log-browser">
                     {{ log.browser or 'Unknown' }}

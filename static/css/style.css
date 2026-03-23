@@ -1726,3 +1726,40 @@ h1 {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* ── Results Vote Confirmation ────────────────────────── */
+.rv-voted-option {
+    background: #f5f3ff;
+    border: 2px solid #c4b5fd;
+    border-radius: 16px;
+    padding: 20px;
+    display: inline-block;
+    min-width: 260px;
+}
+
+.rv-voted-label {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.rv-voted-choice {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rv-locked-msg {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    color: #64748b;
+    font-weight: 500;
+    display: inline-block;
+}

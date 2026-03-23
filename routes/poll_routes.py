@@ -173,6 +173,9 @@ def create_poll():
 # ── GET /poll/<poll_id> (Vote Page) ───────────────────────
 @poll_bp.route("/poll/<int:poll_id>", methods=["GET"])
 def vote_page(poll_id):
+    # Must be logged in to vote
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     conn = get_db_connection()
 
     poll = conn.execute(
@@ -246,21 +249,55 @@ def results_page(poll_id):
         "SELECT * FROM polls WHERE id = ?", (poll_id,)
     ).fetchone()
 
-    conn.close()
-
     if not poll:
+        conn.close()
         return render_template("404.html"), 404
+
+    # ── Check expiry ──────────────────────────────────────
+    end_dt     = datetime.fromisoformat(
+                     poll["end_time"].replace("T"," ")[:19])
+    is_expired = datetime.now() > end_dt
+
+    # ── Who is visiting? ──────────────────────────────────
+    user_id    = session.get('user_id')
+    is_creator = user_id and \
+                 int(user_id) == int(poll["user_id"])
+
+    # ── Check if visitor has voted (DB check) ─────────────
+    has_voted    = False
+    voted_option = None
+
+    if user_id:
+        vote = conn.execute("""
+            SELECT v.id, o.option as voted_option
+            FROM votes v
+            JOIN options o
+              ON o.id = v.selected_option_id
+            WHERE v.poll_id    = ?
+            AND   v.created_id = ?
+            LIMIT 1
+        """, (poll_id, user_id)).fetchone()
+
+        has_voted    = vote is not None
+        voted_option = vote['voted_option'] \
+                       if vote else None
+
+    conn.close()
 
     poll_data = {
         "id":       poll["id"],
         "question": poll["question"],
         "end_time": poll["end_time"],
+        "user_id":  poll["user_id"],
     }
 
-    end_time_raw = poll["end_time"].replace("T", " ")[:19]
-    end_dt       = datetime.fromisoformat(end_time_raw)
-    is_expired   = datetime.now() > end_dt
+    #showing results to creator and after expiry only
+    show_results = is_expired or is_creator
 
     return render_template("results.html",
-                           poll       = poll_data,
-                           is_expired = is_expired)
+                           poll         = poll_data,
+                           is_expired   = is_expired,
+                           is_creator   = is_creator,
+                           has_voted    = has_voted,
+                           voted_option = voted_option,
+                           show_results = show_results)

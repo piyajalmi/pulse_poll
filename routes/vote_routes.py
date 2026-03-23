@@ -53,13 +53,22 @@ def submit_vote(poll_id):
         }), 400
 
     # ── Step 3: Check duplicate via session ───────────────
-    voted_key = f"voted_{poll_id}"
-    if session.get(voted_key):
+    # voted_key = f"voted_{poll_id}"
+    # if session.get(voted_key):
+    #     conn.close()
+    #     return jsonify({
+    #         "error": "You have already voted in this poll."
+    #     }), 400
+    existing_vote = conn.execute("""
+        SELECT id FROM votes
+        WHERE poll_id = ? AND created_id = ?
+    """, (poll_id, session.get('user_id'))).fetchone()
+
+    if existing_vote:
         conn.close()
         return jsonify({
             "error": "You have already voted in this poll."
         }), 400
-
     # ── Step 4: Get option_ids + submission_id ────────────
     data          = request.get_json()
     option_ids    = data.get("option_ids", [])
@@ -187,8 +196,8 @@ def submit_vote(poll_id):
     )
 
     # ── Step 12: Mark session as voted ────────────────────
-    session[voted_key] = True
-    session.permanent  = True
+    # session[voted_key] = True
+    # session.permanent  = True
 
     return jsonify({
         "message":      "Vote submitted successfully!",

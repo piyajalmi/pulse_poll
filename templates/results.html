@@ -8,103 +8,192 @@
 {% endblock %}
 
 {% block content %}
-
 <section class="pp-results-section py-5">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-7 col-md-9">
 
+                {% if show_results %}
+                <!-- ── Full Results ────────────────────── -->
+                <!-- Visible to: creator always,
+                     everyone after expiry            -->
+
                 {% if is_expired %}
                 <div class="pp-banner pp-banner-ended mb-4">
                     <i class="bi bi-lock-fill me-2"></i>
-                    Voting has ended. Here are the final results.
+                    Voting has ended.
+                    Here are the final results.
                 </div>
                 {% else %}
                 <div class="pp-banner pp-banner-live mb-4">
-                    <i class="bi bi-circle-fill me-2 pp-live-dot"></i>
-                    Live results⚡
+                    <i class="bi bi-shield-fill me-2"></i>
+                    Viewing as poll creator
+                    <i class="bi bi-circle-fill ms-2
+                               pp-live-dot"></i>
+                    Live
                 </div>
                 {% endif %}
 
                 <div class="pp-card">
-
                     <div class="pp-results-header mb-4">
                         <h3 class="pp-question">
                             {{ poll.question }}
                         </h3>
                         {% if not is_expired %}
-                        <div class="pp-timer" id="timerDisplay">
+                        <div class="pp-timer"
+                             id="timerDisplay">
                             <i class="bi bi-clock me-1"></i>
-                            <span id="timerText">Loading...</span>
+                            <span id="timerText">
+                                Loading...
+                            </span>
                         </div>
                         {% else %}
                         <div class="pp-timer"
-                             style="background:#f1f5f9; color:#94a3b8;">
+                             style="background:#f1f5f9;
+                                    color:#94a3b8;">
                             <i class="bi bi-lock me-1"></i>
                             Poll Closed
                         </div>
                         {% endif %}
                     </div>
 
-                    <div id="loadingState" class="text-center py-4">
+                    <div id="loadingState"
+                         class="text-center py-4">
                         <div class="spinner-border"
                              style="color:#4f46e5;"></div>
-                        <p class="text-muted mt-2">Loading results...</p>
+                        <p class="text-muted mt-2">
+                            Loading results...
+                        </p>
                     </div>
 
-                    <div id="resultsContent" class="d-none">
-
+                    <div id="resultsContent"
+                         class="d-none">
                         <div class="pp-chart-container mb-4">
-                            <canvas id="resultsChart"></canvas>
+                            <canvas id="resultsChart">
+                            </canvas>
                         </div>
-
-                        <div id="optionBreakdown" class="mb-4"></div>
-
-                        <div class="pp-total-votes text-center">
-                            <span class="pp-total-label">Total Votes:</span>
+                        <div id="optionBreakdown"
+                             class="mb-4"></div>
+                        <div class="pp-total-votes
+                                    text-center">
+                            <span class="pp-total-label">
+                                Total Votes:
+                            </span>
                             <span class="pp-total-number"
-                                  id="totalVotes">0</span>
+                                  id="totalVotes">
+                                0
+                            </span>
                         </div>
-
                     </div>
 
-                    <div class="d-flex gap-3 justify-content-center
+                    <div class="d-flex gap-3
+                                justify-content-center
                                 mt-4 flex-wrap">
                         <a href="/poll/{{ poll.id }}"
                            class="btn btn-pp-outline">
-                            <i class="bi bi-arrow-left me-2"></i>
+                            <i class="bi bi-arrow-left
+                                      me-2"></i>
                             Back to Poll
                         </a>
-                        
                     </div>
 
-                    <!-- <div class="pp-share-box mt-4">
-                        <small class="text-muted">Share results:</small>
+                    <div class="pp-share-box mt-4">
+                        <small class="text-muted">
+                            Share results:
+                        </small>
                         <div class="input-group mt-1">
                             <input type="text"
-                                   class="form-control pp-input"
+                                   class="form-control
+                                          pp-input"
                                    id="shareLink"
                                    value="{{ request.host_url }}poll/{{ poll.id }}/results"
                                    readonly>
                             <button class="btn btn-pp-outline"
+                                    type="button"
                                     onclick="copyLink()">
-                                <i class="bi bi-clipboard"></i>
+                                <i class="bi bi-clipboard">
+                                </i>
                             </button>
                         </div>
                         <div id="copyMsg"
-                             class="text-success small mt-1 d-none">
+                             class="text-success small
+                                    mt-1 d-none">
                             <i class="bi bi-check2 me-1"></i>
                             Link copied!
                         </div>
-                    </div> -->
-
+                    </div>
                 </div>
+
+                {% elif has_voted %}
+                <!-- ── Voter confirmation ─────────────── -->
+                <!-- Poll still active, voter has voted   -->
+                <div class="pp-card text-center">
+                    <i class="bi bi-check-circle-fill mb-3"
+                       style="font-size:3rem;
+                              color:#4f46e5;"></i>
+                    <h4 class="fw-bold mb-2"
+                        style="color:#1e1b4b;">
+                        Vote Recorded! 🎉
+                    </h4>
+                    <p class="text-muted mb-3">
+                        Thank you for participating.
+                    </p>
+
+                    {% if voted_option %}
+                    <div class="rv-voted-option mb-4">
+                        <p class="rv-voted-label">
+                            You voted for:
+                        </p>
+                        <div class="rv-voted-choice">
+                            <i class="bi bi-check2-circle
+                                      me-2"
+                               style="color:#4f46e5;"></i>
+                            {{ voted_option }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="rv-locked-msg mb-4">
+                        <i class="bi bi-lock-fill me-2"
+                           style="color:#94a3b8;"></i>
+                        Results will be available
+                        once the poll ends.
+                    </div>
+
+                    <a href="/"
+                       class="btn btn-pp-primary">
+                        <i class="bi bi-house me-2"></i>
+                        Go to Homepage
+                    </a>
+                </div>
+
+                {% else %}
+                <!-- ── Not voted, poll still active ──── -->
+                <div class="pp-card text-center">
+                    <i class="bi bi-hourglass-split mb-3"
+                       style="font-size:3rem;
+                              color:#818cf8;"></i>
+                    <h4 class="fw-bold mb-2"
+                        style="color:#1e1b4b;">
+                        Poll is still running
+                    </h4>
+                    <p class="text-muted mb-4">
+                        Results will be visible
+                        once voting ends.
+                    </p>
+                    <a href="/poll/{{ poll.id }}"
+                       class="btn btn-pp-primary">
+                        <i class="bi bi-hand-index-thumb
+                                  me-2"></i>
+                        Cast Your Vote
+                    </a>
+                </div>
+                {% endif %}
 
             </div>
         </div>
     </div>
 </section>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -112,7 +201,9 @@
     const POLL_ID    = "{{ poll.id }}";
     const END_TIME   = "{{ poll.end_time }}";
     const IS_EXPIRED = "{{ is_expired }}" === "True";
+    const SHOW_RESULTS = "{{ show_results }}" === "True";
 </script>
-<script src="{{ url_for('static', filename='js/results.js') }}">
+<script src="{{ url_for('static',
+              filename='js/results.js') }}">
 </script>
 {% endblock %}

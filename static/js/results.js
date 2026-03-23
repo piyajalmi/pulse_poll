@@ -5,6 +5,8 @@ let socket       = null;
 // ── Initialize on page load ─────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
 
+    //only loading content if allowed
+    if (!SHOW_RESULTS) return;
     // Always fetch results once on load
     fetchResults();
 

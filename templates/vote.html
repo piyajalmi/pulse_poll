@@ -194,7 +194,7 @@
             <input type="text"
                    class="form-control pp-input"
                    id="shareLink"
-                   value="{{ request.host_url }}poll/{{ poll.id }}"
+                   value="{{ request.host_url }}poll/{{ poll.share_token }}"
                    readonly>
             <button class="btn btn-pp-outline"
                     type="button"
@@ -263,28 +263,3 @@
 <script src="{{ url_for('static', filename='js/vote.js') }}">
 </script>
 {% endblock %}
-```
-
----
-
-What changed and why:
-```
-Change 1 — Options loop (most important)
-OLD: onclick="selectOption(this, '{{ option }}')"
-     {{ option }}   ← option was plain text string
-
-NEW: onclick="selectOption(this, {{ option.id }}, '{{ option.text }}')"
-     option.id    ← integer, no quotes needed
-     option.text  ← the display text
-
-Change 2 — Option text display
-OLD: {{ option }}
-NEW: {{ option.text }}
-
-Change 3 — Removed hidden input #selectedOption
-     Not needed anymore — JS tracks
-     selectedOptionId and selectedOptionText
-     as separate variables
-
-Change 4 — Added type="button" to clipboard button
-     Prevents accidental form submission

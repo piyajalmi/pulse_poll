@@ -51,7 +51,12 @@
             <div class="d-flex align-items-center gap-3">
             
           {% if session.get('user_name') %}
-          <a href="/dashboard" type="button" class="btn btn-outline-primary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+          {% set user_role=session.get('role') %}
+              {% if user_role == 'admin' %}
+              <a href="/admin/dashboard" type="button" class="btn btn-outline-primary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+                {% else %}
+              <a href="/dashboard" type="button" class="btn btn-outline-primary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+                {% endif %}
                 <div class="dropdown">
             <a href="#" class="btn btn-outline-primary btn-sm border border-0 dropdown-toggle" 
        style="color:#c7d2fe;" role="button" id="userDropdown" 

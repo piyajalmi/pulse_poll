@@ -110,22 +110,15 @@
             </div>
 
             <!-- Poll Start Date & Time -->
-            <div class="mb-4">
+           <div class="row col-12">
+             <div class="mb-4 col-6">
                 <label class="pp-label">
                     Poll Start Date & Time
                 </label>
-                <div class="row g-2">
-                    <div class="col-7">
-                        <input type="date"
+                        <input type="datetime-local"
                                id="pollStartDate"
                                class="form-control pp-input">
-                    </div>
-                    <div class="col-5">
-                        <input type="time"
-                               id="pollStartTime"
-                               class="form-control pp-input">
-                    </div>
-                </div>
+                    
                 <div class="text-danger small mt-1 d-none"
                      id="startError">
                     Please select a valid start date and time.
@@ -133,27 +126,19 @@
             </div>
 
             <!-- Poll End Date & Time -->
-            <div class="mb-4">
+            <div class="mb-4 col-6">
                 <label class="pp-label">
                     Poll End Date & Time
                 </label>
-                <div class="row g-2">
-                    <div class="col-7">
-                        <input type="date"
-                               id="pollEndDate"
-                               class="form-control pp-input">
-                    </div>
-                    <div class="col-5">
-                        <input type="time"
-                               id="pollEndTime"
-                               class="form-control pp-input">
-                    </div>
-                </div>
+                    <input type="datetime-local"
+                            id="pollEndDate"
+                            class="form-control pp-input">
                 <div class="text-danger small mt-1 d-none"
                      id="timeError">
                     Please select a valid end date and time.
                 </div>
             </div>
+           </div>
 
             <!-- Submit Button -->
             <button class="btn btn-pp-primary w-100 mt-2"

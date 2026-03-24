@@ -9,7 +9,8 @@ from config import Config
 from functools import wraps
 from models import get_db_connection, init_db
 from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
+
 
 
 # ── Create Flask app ──────────────────────────────────────
@@ -572,28 +573,40 @@ def login_validation():
     email    = request.form.get('email')
     password = request.form.get('password')
 
-    conn   = get_db_connection()        # ← use get_db_connection() for row_factory
-    user   = conn.execute(
-        "SELECT * FROM users WHERE email = ? AND password = ?",
-        (email, password)
+    conn = get_db_connection()
+
+    # ✅ Fetch only by email
+    user = conn.execute(
+        "SELECT * FROM users WHERE email = ?",
+        (email,)
     ).fetchone()
     conn.close()
 
-    if user:
-        session['user_id']   = user['id']           
-        session['user_name'] = user['first_name'] 
-        session['role'] = user['role']  
-        session.permanent    = True
-
-        #direction based on role
-        if user['role'] == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return redirect(url_for('poll.index'))           
-    else:
+    if not user:
+        flash('Invalid email or password.', 'danger')
+        return redirect(url_for('login'))
+    
+    if user['status'] == 0:
+        flash('Your account has been suspended.', 'danger')
+        return redirect(url_for('login'))
+    
+    # ✅ Check hashed password
+    if not bcrypt.checkpw(
+        password.encode('utf-8'),
+        user['password'].encode('utf-8')
+    ):
         flash('Invalid email or password.', 'danger')
         return redirect(url_for('login'))
 
+    session['user_id']   = user['id']
+    session['user_name'] = user['first_name']
+    session['role']      = user['role']
+    session.permanent    = True
+
+    if user['role'] == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('poll.index'))
 
 @app.route('/signup')
 def signup():
@@ -609,6 +622,7 @@ def add_user():
 
     conn = get_db_connection()
 
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     # Check if user already exists
     existing = conn.execute(
         "SELECT * FROM users WHERE email = ?", (email,)
@@ -623,7 +637,7 @@ def add_user():
             INSERT INTO users (first_name, last_name, email, password,
                                created_at, status)
             VALUES (?, ?, ?, ?, datetime('now', 'localtime'), 1)
-        """, (fname, lname, email, password))
+        """, (fname, lname, email, hashed_password))
         conn.commit()
 
         #gets new users auto generated id
@@ -871,6 +885,27 @@ def admin_polls():
                            filter_user    = filter_user,
                            filter_status  = filter_status,
                            filter_date    = filter_date)
+                        
+
+# @app.route('/admin/users')
+# @admin_required
+# def admin_users():
+#     conn = get_db_connection()
+
+#     users = 
+#     conn.execute("""
+#         SELECT id, first_name, last_name, email, created_at
+#         FROM users
+#         WHERE role = 'user' AND status = 1
+#         ORDER BY created_at DESC
+#     """).fetchall()
+#     conn.close()
+#     return render_template('admin_users.html',
+#                            active_page = 'admin_users',
+#                            users       = users)
+
+
+
 
 # @app.route('/polls')
 # def polls_list():

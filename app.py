@@ -23,6 +23,7 @@ UPLOADS_FOLDER = os.path.join(
     os.path.dirname(__file__),
     'static', 'uploads'
 )
+os.makedirs(UPLOADS_FOLDER, exist_ok=True)
 # ── Initialize SocketIO ───────────────────────────────────
 socketio = SocketIO(app,
                     cors_allowed_origins="*",

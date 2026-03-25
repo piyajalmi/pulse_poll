@@ -1,5 +1,7 @@
 import sqlite3
 import json
+
+import bcrypt
 from config import Config
 
 def get_db_connection():
@@ -23,6 +25,7 @@ def init_db():
             user_id INTEGER, 
             poll_type  VARCHAR(10) DEFAULT 'single'
                    CHECK(poll_type IN ('single', 'multiple')),
+            share_token VARCHAR(40) UNIQUE,
             created_at TIMESTAMP,
             created_id INTEGER,
             status TINYINT DEFAULT 1,
@@ -62,7 +65,7 @@ def init_db():
             first_name varchar(100),
             last_name varchar(100),
             email varchar(100),
-            password varchar(100) NOT NULL,
+            password varchar(255) NOT NULL,
             role VARCHAR(10) DEFAULT 'user'
                  CHECK(role IN ('user', 'admin')),
             created_at TIMESTAMP,
@@ -105,6 +108,12 @@ def init_db():
     ).fetchone()
 
     if not existing_admin:
+    
+        hashed = bcrypt.hashpw(
+        'admin@123'.encode('utf-8'),
+        bcrypt.gensalt()
+    ).decode('utf-8')
+        
         conn.execute("""
             INSERT INTO users (first_name, last_name,
                                email, password, role,
@@ -115,7 +124,7 @@ def init_db():
             'Pia',
             'Jalmi',
             'piya.intern@gmail.com',
-            'admin@123'
+            hashed
         ))
         conn.commit()
         print("Admin user created successfully.")

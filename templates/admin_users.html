@@ -1,0 +1,443 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Users — Admin PulsePoll{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ────────────────────────────────────── -->
+<div class="db-page-header mb-4">
+    <div>
+        <h4 class="db-page-title">
+            <i class="bi bi-people-fill me-2"
+               style="color:#4f46e5;"></i>
+            All Users
+        </h4>
+        <p class="db-page-subtitle">
+            {{ users|length }} registered user{{
+            's' if users|length != 1 }}
+        </p>
+    </div>
+</div>
+
+<!-- ── Users Table ────────────────────────────────────── -->
+{% if users %}
+<div class="db-polls-table">
+
+    <!-- Header -->
+    <div class="au-table-header">
+        <span>#</span>
+        <span>Name</span>
+        <span>Email</span>
+        <span>Polls</span>
+        <span>Joined</span>
+        <span>Status</span>
+        <span>Actions</span>
+    </div>
+
+    <!-- Rows -->
+    {% for user in users %}
+    <div class="au-table-row" id="userRow{{ user.id }}">
+
+        <!-- Index -->
+        <span class="au-user-index">
+            {{ loop.index }}
+        </span>
+
+        <!-- Name -->
+        <span class="au-user-name">
+            <div class="au-avatar">
+                {{ user.first_name[0] }}{{ user.last_name[0] }}
+            </div>
+            <div>
+                <div class="au-full-name">
+                    {{ user.first_name }} {{ user.last_name }}
+                </div>
+            </div>
+        </span>
+
+        <!-- Email -->
+        <span class="au-user-email">
+            {{ user.email }}
+        </span>
+
+        <!-- Poll count -->
+        <span class="au-user-polls">
+            <i class="bi bi-bar-chart me-1"></i>
+            {{ user.poll_count }}
+        </span>
+
+        <!-- Joined -->
+        <span class="au-user-joined">
+            {{ user.created_at[:10]
+               if user.created_at else '—' }}
+        </span>
+
+        <!-- Status -->
+        <span>
+            <span class="au-status-badge
+                {% if user.status == 1 %}
+                au-status-active
+                {% else %}
+                au-status-banned
+                {% endif %}"
+                id="statusBadge{{ user.id }}">
+                {% if user.status == 1 %}
+                <i class="bi bi-circle-fill me-1"
+                   style="font-size:0.4rem;"></i>
+                Active
+                {% else %}
+                <i class="bi bi-circle-fill me-1"
+                   style="font-size:0.4rem;"></i>
+                Banned
+                {% endif %}
+            </span>
+        </span>
+
+        <!-- Actions -->
+        <span class="db-poll-actions">
+
+            <!-- Edit button -->
+            <button class="db-action-btn"
+                    title="Edit User"
+                    onclick="openEditModal(
+                        {{ user.id }},
+                        '{{ user.first_name }}',
+                        '{{ user.last_name }}',
+                        '{{ user.email }}',
+                        {{ user.status }}
+                    )">
+                <i class="bi bi-pencil-fill"></i>
+            </button>
+
+            <!-- Ban/Unban button -->
+            <button class="db-action-btn
+                {% if user.status == 1 %}
+                au-btn-ban
+                {% else %}
+                au-btn-unban
+                {% endif %}"
+                    title="{% if user.status == 1 %}
+                           Ban User
+                           {% else %}Unban User{% endif %}"
+                    id="banBtn{{ user.id }}"
+                    onclick="toggleBan(
+                        {{ user.id }},
+                        {{ user.status }}
+                    )">
+                {% if user.status == 1 %}
+                <i class="bi bi-slash-circle-fill"></i>
+                {% else %}
+                <i class="bi bi-check-circle-fill"></i>
+                {% endif %}
+            </button>
+
+        </span>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% else %}
+<div class="db-empty-state">
+    <i class="bi bi-people"></i>
+    <p>No users registered yet.</p>
+</div>
+{% endif %}
+
+
+<!-- ── Edit User Modal ────────────────────────────────── -->
+<div class="au-modal-overlay d-none"
+     id="editModalOverlay">
+    <div class="au-modal">
+
+        <!-- Modal Header -->
+        <div class="au-modal-header">
+            <h5 class="au-modal-title">
+                <i class="bi bi-pencil-square me-2"></i>
+                Edit User
+            </h5>
+            <button class="au-modal-close"
+                    onclick="closeEditModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="au-modal-body">
+
+            <!-- Hidden user id -->
+            <input type="hidden" id="editUserId">
+
+            <!-- Name row -->
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <label class="au-modal-label">
+                        First Name
+                    </label>
+                    <input type="text"
+                           id="editFirstName"
+                           class="form-control pp-input"
+                           placeholder="First name">
+                </div>
+                <div class="col-6">
+                    <label class="au-modal-label">
+                        Last Name
+                    </label>
+                    <input type="text"
+                           id="editLastName"
+                           class="form-control pp-input"
+                           placeholder="Last name">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label class="au-modal-label">
+                    Email Address
+                </label>
+                <input type="email"
+                       id="editEmail"
+                       class="form-control pp-input"
+                       placeholder="email@example.com">
+            </div>
+
+            <!-- New Password -->
+            <div class="mb-3">
+                <label class="au-modal-label">
+                    New Password
+                    <span class="au-optional-tag">
+                        optional
+                    </span>
+                </label>
+                <input type="password"
+                       id="editPassword"
+                       class="form-control pp-input"
+                       placeholder="Leave blank to keep current">
+            </div>
+
+            <!-- Status -->
+            <div class="mb-3">
+                <label class="au-modal-label">
+                    Account Status
+                </label>
+                <select id="editStatus"
+                        class="form-control pp-input">
+                    <option value="1">Active</option>
+                    <option value="0">Banned</option>
+                </select>
+            </div>
+
+            <!-- Error message -->
+            <div id="editError"
+                 class="text-danger small d-none mb-2">
+            </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="au-modal-footer">
+            <button class="au-btn-cancel"
+                    onclick="closeEditModal()">
+                Cancel
+            </button>
+            <button class="au-btn-save"
+                    id="saveUserBtn"
+                    onclick="saveUser()">
+                <i class="bi bi-check-circle me-1"></i>
+                Save Changes
+            </button>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Open edit modal ──────────────────────────────────────
+function openEditModal(id, firstName, lastName,
+                       email, status) {
+    document.getElementById("editUserId").value    = id;
+    document.getElementById("editFirstName").value = firstName;
+    document.getElementById("editLastName").value  = lastName;
+    document.getElementById("editEmail").value     = email;
+    document.getElementById("editPassword").value  = "";
+    document.getElementById("editStatus").value    = status;
+    document.getElementById("editError")
+            .classList.add("d-none");
+
+    document.getElementById("editModalOverlay")
+            .classList.remove("d-none");
+}
+
+// ── Close edit modal ─────────────────────────────────────
+function closeEditModal() {
+    document.getElementById("editModalOverlay")
+            .classList.add("d-none");
+}
+
+// ── Save user changes ────────────────────────────────────
+async function saveUser() {
+    const userId    = document.getElementById("editUserId")
+                              .value;
+    const firstName = document.getElementById("editFirstName")
+                              .value.trim();
+    const lastName  = document.getElementById("editLastName")
+                              .value.trim();
+    const email     = document.getElementById("editEmail")
+                              .value.trim();
+    const password  = document.getElementById("editPassword")
+                              .value.trim();
+    const status    = parseInt(
+                          document.getElementById("editStatus")
+                                  .value
+                      );
+    const btn       = document.getElementById("saveUserBtn");
+    const errorDiv  = document.getElementById("editError");
+
+    // Validate
+    if (!firstName || !lastName || !email) {
+        errorDiv.textContent = "Name and email are required.";
+        errorDiv.classList.remove("d-none");
+        return;
+    }
+
+    btn.disabled  = true;
+    btn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-1">
+        </span>Saving...`;
+
+    try {
+        const response = await fetch(
+            `/admin/users/${userId}/edit`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                first_name: firstName,
+                last_name:  lastName,
+                email:      email,
+                password:   password,
+                status:     status
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Update name in table row
+            const row = document.getElementById(
+                `userRow${userId}`
+            );
+            row.querySelector(".au-full-name").textContent =
+                `${firstName} ${lastName}`;
+            row.querySelector(".au-user-email").textContent =
+                email;
+
+            // Update avatar initials
+            row.querySelector(".au-avatar").textContent =
+                `${firstName[0]}${lastName[0]}`;
+
+            // Update status badge
+            updateStatusBadge(userId, status);
+
+            closeEditModal();
+
+        } else {
+            errorDiv.textContent = data.error;
+            errorDiv.classList.remove("d-none");
+        }
+
+    } catch (error) {
+        errorDiv.textContent = "Network error. Try again.";
+        errorDiv.classList.remove("d-none");
+    }
+
+    btn.disabled  = false;
+    btn.innerHTML = `
+        <i class="bi bi-check-circle me-1"></i>
+        Save Changes`;
+}
+
+// ── Toggle ban/unban ─────────────────────────────────────
+async function toggleBan(userId, currentStatus) {
+    const action = currentStatus === 1
+                   ? "ban" : "unban";
+    const confirm_msg = currentStatus === 1
+        ? "Ban this user? They won't be able to login."
+        : "Unban this user?";
+
+    if (!confirm(confirm_msg)) return;
+
+    try {
+        const response = await fetch(
+            `/admin/users/${userId}/ban`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const newStatus = data.new_status;
+            updateStatusBadge(userId, newStatus);
+            updateBanButton(userId, newStatus);
+        } else {
+            alert(data.error);
+        }
+
+    } catch (error) {
+        alert("Network error. Try again.");
+    }
+}
+
+// ── Update status badge in table ─────────────────────────
+function updateStatusBadge(userId, status) {
+    const badge = document.getElementById(
+        `statusBadge${userId}`
+    );
+    if (status === 1 || status === "1") {
+        badge.className = "au-status-badge au-status-active";
+        badge.innerHTML = `
+            <i class="bi bi-circle-fill me-1"
+               style="font-size:0.4rem;"></i>Active`;
+    } else {
+        badge.className = "au-status-badge au-status-banned";
+        badge.innerHTML = `
+            <i class="bi bi-circle-fill me-1"
+               style="font-size:0.4rem;"></i>Banned`;
+    }
+}
+
+// ── Update ban button ────────────────────────────────────
+function updateBanButton(userId, newStatus) {
+    const btn = document.getElementById(`banBtn${userId}`);
+    if (newStatus === 1) {
+        btn.className  = "db-action-btn au-btn-ban";
+        btn.title      = "Ban User";
+        btn.innerHTML  = `
+            <i class="bi bi-slash-circle-fill"></i>`;
+        btn.setAttribute(
+            "onclick",
+            `toggleBan(${userId}, 1)`
+        );
+    } else {
+        btn.className  = "db-action-btn au-btn-unban";
+        btn.title      = "Unban User";
+        btn.innerHTML  = `
+            <i class="bi bi-check-circle-fill"></i>`;
+        btn.setAttribute(
+            "onclick",
+            `toggleBan(${userId}, 0)`
+        );
+    }
+}
+
+// ── Close modal on overlay click ─────────────────────────
+document.getElementById("editModalOverlay")
+        .addEventListener("click", function(e) {
+    if (e.target === this) closeEditModal();
+});
+</script>
+{% endblock %}

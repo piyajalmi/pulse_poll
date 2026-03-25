@@ -9,7 +9,8 @@ from config import Config
 from functools import wraps
 from models import get_db_connection, init_db
 from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
+
 
 
 # ── Create Flask app ──────────────────────────────────────
@@ -153,10 +154,12 @@ def my_polls():
     # 2 fetch polls using limit and offset for pagination
     polls = conn.execute("""
         SELECT
-            p.id,
-            p.question,
-            p.end_time,
-            p.created_at,
+        p.id,
+        p.question,
+        p.start_time,
+        p.end_time,
+        p.share_token,  
+        
             COUNT(v.id) as vote_count,
             CASE
                 WHEN datetime(p.end_time) <= datetime('now', 'localtime')
@@ -184,8 +187,8 @@ def my_polls():
                            current_page = page,
                            total_pages = total_pages)
 
-@app.route('/dashboard/poll/<int:poll_id>')
-def poll_detail(poll_id):
+@app.route('/dashboard/poll/<string:token>')
+def poll_detail(token):
     #step 1 must be logged in 
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -195,14 +198,15 @@ def poll_detail(poll_id):
     #step 2 get poll - verifying it belongs to that user 
     poll = conn.execute("""
         SELECT * FROM polls
-        WHERE id = ? AND user_id = ? 
-    """, (poll_id, session['user_id'])).fetchone()
+        WHERE share_token = ? AND user_id = ? 
+    """, (token, session['user_id'])).fetchone()
 
     #step 3 poll not found and doesnt belong to user
     if not poll:
         conn.close()
         return render_template('404.html'), 404
     
+    poll_id = poll["id"]
     #step 4 get options wih votes counts
     options = conn.execute("""
         SELECT
@@ -260,8 +264,8 @@ def poll_detail(poll_id):
                            is_expired=is_expired)
 
 # GET /dashboard/poll/<id>/edit ------------
-@app.route('/dashboard/poll/<int:poll_id>/edit')
-def edit_poll(poll_id):
+@app.route('/dashboard/poll/<string:token>/edit')
+def edit_poll(token):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     conn = get_db_connection()
@@ -269,13 +273,14 @@ def edit_poll(poll_id):
     #verifying poll belongs to user
     poll = conn.execute("""
         SELECT * FROM polls
-        WHERE id = ? AND user_id = ? AND status = 1
-    """, (poll_id, session['user_id'])).fetchone()
+        WHERE share_token = ? AND user_id = ? AND status = 1
+    """, (token, session['user_id'])).fetchone()
     
     if not poll:
         conn.close()
         return render_template('404.html'), 404
     
+    poll_id = poll["id"]
     #checking poll expiration
         
     end_time_raw = poll['end_time'].replace("T", " ")[:19]
@@ -323,9 +328,9 @@ def edit_poll(poll_id):
 
 
 # ── POST /dashboard/poll/<id>/edit ───────────────────────
-@app.route('/dashboard/poll/<int:poll_id>/edit',
+@app.route('/dashboard/poll/<string:token>/edit',
            methods=['POST'])
-def edit_poll_submit(poll_id):
+def edit_poll_submit(token):
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -342,8 +347,9 @@ def edit_poll_submit(poll_id):
             "error": "Question is required."
         }), 400
 
+   
     valid_options = [o for o in options
-                     if o.get("text", "").strip()]
+                     if o.get("text", "").strip() or o.get("file_base64")]
     if len(valid_options) < 2:
         return jsonify({
             "error": "At least 2 options required."
@@ -363,13 +369,14 @@ def edit_poll_submit(poll_id):
     # Verify ownership
     poll = conn.execute("""
         SELECT * FROM polls
-        WHERE id = ? AND user_id = ? AND status = 1
-    """, (poll_id, session['user_id'])).fetchone()
+        WHERE share_token = ? AND user_id = ? AND status = 1
+    """, (token, session['user_id'])).fetchone()
 
     if not poll:
         conn.close()
         return jsonify({"error": "Poll not found."}), 404
 
+    poll_id = poll["id"]
     # Check vote count for poll_type lock
     vote_count = conn.execute("""
         SELECT COUNT(*) as count FROM votes
@@ -504,8 +511,8 @@ def edit_poll_submit(poll_id):
 
 
 
-@app.route('/dashboard/poll/<int:poll_id>/delete', methods=['POST'])
-def delete_poll(poll_id):
+@app.route('/dashboard/poll/<string:token>/delete', methods=['POST'])
+def delete_poll(token):
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -513,14 +520,15 @@ def delete_poll(poll_id):
 
     poll = conn.execute("""
         SELECT * FROM polls
-        WHERE id = ? AND user_id = ?
-    """, (poll_id, session['user_id'])).fetchone()
+        WHERE share_token = ? AND user_id = ?
+    """, (token, session['user_id'])).fetchone()
 
     if not poll:
         conn.close()
         return jsonify({"error": "Poll not found"}), 404
 
     # Soft delete
+    poll_id = poll["id"]
     conn.execute("UPDATE polls SET status = 0 WHERE id = ?", (poll_id,))
     conn.commit()
     conn.close()
@@ -541,6 +549,7 @@ def polls_list():
             p.question,
             p.start_time,
             p.end_time,
+            p.share_token,
             u.first_name,         
             u.last_name,
             COUNT(v.id) as vote_count,
@@ -572,28 +581,40 @@ def login_validation():
     email    = request.form.get('email')
     password = request.form.get('password')
 
-    conn   = get_db_connection()        # ← use get_db_connection() for row_factory
-    user   = conn.execute(
-        "SELECT * FROM users WHERE email = ? AND password = ?",
-        (email, password)
+    conn = get_db_connection()
+
+    # ✅ Fetch only by email
+    user = conn.execute(
+        "SELECT * FROM users WHERE email = ?",
+        (email,)
     ).fetchone()
     conn.close()
 
-    if user:
-        session['user_id']   = user['id']           
-        session['user_name'] = user['first_name'] 
-        session['role'] = user['role']  
-        session.permanent    = True
-
-        #direction based on role
-        if user['role'] == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return redirect(url_for('poll.index'))           
-    else:
+    if not user:
+        flash('Invalid email or password.', 'danger')
+        return redirect(url_for('login'))
+    
+    if user['status'] == 0:
+        flash('Your account has been suspended.', 'danger')
+        return redirect(url_for('login'))
+    
+    # ✅ Check hashed password
+    if not bcrypt.checkpw(
+        password.encode('utf-8'),
+        user['password'].encode('utf-8')
+    ):
         flash('Invalid email or password.', 'danger')
         return redirect(url_for('login'))
 
+    session['user_id']   = user['id']
+    session['user_name'] = user['first_name']
+    session['role']      = user['role']
+    session.permanent    = True
+
+    if user['role'] == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('poll.index'))
 
 @app.route('/signup')
 def signup():
@@ -609,6 +630,7 @@ def add_user():
 
     conn = get_db_connection()
 
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     # Check if user already exists
     existing = conn.execute(
         "SELECT * FROM users WHERE email = ?", (email,)
@@ -623,7 +645,7 @@ def add_user():
             INSERT INTO users (first_name, last_name, email, password,
                                created_at, status)
             VALUES (?, ?, ?, ?, datetime('now', 'localtime'), 1)
-        """, (fname, lname, email, password))
+        """, (fname, lname, email, hashed_password))
         conn.commit()
 
         #gets new users auto generated id
@@ -706,7 +728,7 @@ def admin_dashboard():
     if filter_user:
         recent_polls = conn.execute("""
             SELECT
-                p.id, p.question, p.end_time,
+                p.id, p.share_token, p.question, p.end_time,
                 p.start_time,
                 u.first_name, u.last_name,
                 COUNT(v.id) as vote_count,
@@ -730,7 +752,7 @@ def admin_dashboard():
     else:
         recent_polls = conn.execute("""
             SELECT
-                p.id, p.question, p.end_time,
+                p.id, p.share_token, p.question, p.end_time,
                 p.start_time,
                 u.first_name, u.last_name,
                 COUNT(v.id) as vote_count,
@@ -827,7 +849,7 @@ def admin_polls():
     # ── Fetch polls ───────────────────────────────────────
     polls = conn.execute(f"""
         SELECT
-            p.id, p.question,
+            p.id, p.share_token, p.question,
             p.start_time, p.end_time,
             p.poll_type,
             u.first_name, u.last_name,
@@ -871,11 +893,384 @@ def admin_polls():
                            filter_user    = filter_user,
                            filter_status  = filter_status,
                            filter_date    = filter_date)
+                        
 
-# @app.route('/polls')
-# def polls_list():
-#     conn = get_db_connection()
-#     all_polls = conn.execute("""
+# ── GET /admin/users ──────────────────────────────────────
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    conn = get_db_connection()
+
+    users = conn.execute("""
+        SELECT
+            u.id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.status,
+            u.created_at,
+            COUNT(p.id) as poll_count
+        FROM users u
+        LEFT JOIN polls p ON p.user_id = u.id
+                          AND p.status = 1
+        WHERE u.role = 'user'
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
+    """).fetchall()
+
+    conn.close()
+
+    return render_template('admin_users.html',
+                           active_page = 'admin_users',
+                           users       = users)
+
+
+# ── POST /admin/users/<id>/edit ───────────────────────────
+@app.route('/admin/users/<int:user_id>/edit',
+           methods=['POST'])
+@admin_required
+def admin_edit_user(user_id):
+    data       = request.get_json()
+    first_name = data.get('first_name', '').strip()
+    last_name  = data.get('last_name', '').strip()
+    email      = data.get('email', '').strip()
+    password   = data.get('password', '').strip()
+    status     = data.get('status', 1)
+
+    # ── Validate ──────────────────────────────────────────
+    if not first_name or not last_name or not email:
+        return jsonify({
+            "error": "Name and email are required."
+        }), 400
+
+    conn = get_db_connection()
+
+    # Check user exists
+    user = conn.execute(
+        "SELECT * FROM users WHERE id = ? AND role = 'user'",
+        (user_id,)
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        return jsonify({"error": "User not found."}), 404
+
+    # Check email not taken by another user
+    existing = conn.execute("""
+        SELECT id FROM users
+        WHERE email = ? AND id != ?
+    """, (email, user_id)).fetchone()
+
+    if existing:
+        conn.close()
+        return jsonify({
+            "error": "Email already in use."
+        }), 400
+
+    try:
+        if password:
+            # Update with new password
+            conn.execute("""
+                UPDATE users
+                SET first_name=?, last_name=?,
+                    email=?, password=?, status=?
+                WHERE id=?
+            """, (first_name, last_name,
+                  email, password,
+                  status, user_id))
+        else:
+            # Update without changing password
+            conn.execute("""
+                UPDATE users
+                SET first_name=?, last_name=?,
+                    email=?, status=?
+                WHERE id=?
+            """, (first_name, last_name,
+                  email, status, user_id))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({
+            "error": "Failed to update user."
+        }), 500
+
+    finally:
+        conn.close()
+
+    return jsonify({
+        "message": "User updated successfully!"
+    }), 200
+
+
+# ── POST /admin/users/<id>/ban ────────────────────────────
+@app.route('/admin/users/<int:user_id>/ban',
+           methods=['POST'])
+@admin_required
+def admin_ban_user(user_id):
+    conn = get_db_connection()
+
+    user = conn.execute(
+        "SELECT * FROM users WHERE id = ? AND role='user'",
+        (user_id,)
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        return jsonify({"error": "User not found."}), 404
+
+    # Toggle status
+    new_status = 0 if user['status'] == 1 else 1
+    action     = "banned" if new_status == 0 else "unbanned"
+
+    conn.execute(
+        "UPDATE users SET status=? WHERE id=?",
+        (new_status, user_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "message": f"User {action} successfully!",
+        "new_status": new_status
+    }), 200
+
+
+@app.route('/admin/reports')
+@admin_required
+def admin_reports():
+    report_type = request.args.get('type', '')  
+    filter_status = request.args.get('status', '')
+
+    conn = get_db_connection()
+    report_data = []
+
+    if report_type == 'users':
+        # Overview stats
+        total_users = conn.execute("""
+            SELECT COUNT(*) as count FROM users
+            WHERE role = 'user'
+        """).fetchone()['count']
+
+        active_users = conn.execute("""
+            SELECT COUNT(*) as count FROM users
+            WHERE role = 'user' AND status = 1
+        """).fetchone()['count']
+
+        inactive_users = conn.execute("""
+            SELECT COUNT(*) as count FROM users
+            WHERE role = 'user' AND status = 0
+        """).fetchone()['count']
+
+        # New users this month
+        new_this_month = conn.execute("""
+            SELECT COUNT(*) as count FROM users
+            WHERE role = 'user'
+            AND strftime('%Y-%m', created_at) =
+                strftime('%Y-%m', 'now', 'localtime')
+        """).fetchone()['count']
+
+        # New users today
+        new_today = conn.execute("""
+            SELECT COUNT(*) as count FROM users
+            WHERE role = 'user'
+            AND DATE(created_at) =
+                DATE('now', 'localtime')
+        """).fetchone()['count']
+
+        # Build user list based on filter
+        if filter_status == 'active':
+            users_list = conn.execute("""
+                SELECT
+                    u.id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.status,
+                    u.created_at,
+                    COUNT(p.id) as poll_count
+                FROM users u
+                LEFT JOIN polls p
+                    ON p.user_id = u.id
+                    AND p.status = 1
+                WHERE u.role = 'user'
+                AND u.status = 1
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+            """).fetchall()
+
+        elif filter_status == 'inactive':
+            users_list = conn.execute("""
+                SELECT
+                    u.id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.status,
+                    u.created_at,
+                    COUNT(p.id) as poll_count
+                FROM users u
+                LEFT JOIN polls p
+                    ON p.user_id = u.id
+                    AND p.status = 1
+                WHERE u.role = 'user'
+                AND u.status = 0
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+            """).fetchall()
+
+        else:
+            # All users
+            users_list = conn.execute("""
+                SELECT
+                    u.id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.status,
+                    u.created_at,
+                    COUNT(p.id) as poll_count
+                FROM users u
+                LEFT JOIN polls p
+                    ON p.user_id = u.id
+                    AND p.status = 1
+                WHERE u.role = 'user'
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+            """).fetchall()
+
+        report_data = {
+            'total_users':    total_users,
+            'active_users':   active_users,
+            'inactive_users': inactive_users,
+            'new_this_month': new_this_month,
+            'new_today':      new_today,
+            'users_list':     users_list
+        }
+
+    # ── Polls Summary Report ──────────────────────────────
+    elif report_type == 'polls':
+
+        # Overview stats
+        total_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+        """).fetchone()['count']
+
+        active_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+            AND datetime(end_time) >
+                datetime('now', 'localtime')
+            AND datetime(start_time) <=
+                datetime('now', 'localtime')
+        """).fetchone()['count']
+
+        expired_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+            AND datetime(end_time) <=
+                datetime('now', 'localtime')
+        """).fetchone()['count']
+
+        not_started_polls = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+            AND datetime(start_time) >
+                datetime('now', 'localtime')
+        """).fetchone()['count']
+
+        total_votes = conn.execute("""
+            SELECT COUNT(*) as count FROM votes
+        """).fetchone()['count']
+
+        # Polls created this month
+        polls_this_month = conn.execute("""
+            SELECT COUNT(*) as count FROM polls
+            WHERE status = 1
+            AND strftime('%Y-%m', created_at) =
+                strftime('%Y-%m', 'now', 'localtime')
+        """).fetchone()['count']
+
+        # Build WHERE clause based on filter
+        if filter_status == 'active':
+            where = """
+                p.status = 1
+                AND datetime(p.end_time) >
+                    datetime('now', 'localtime')
+                AND datetime(p.start_time) <=
+                    datetime('now', 'localtime')
+            """
+        elif filter_status == 'expired':
+            where = """
+                p.status = 1
+                AND datetime(p.end_time) <=
+                    datetime('now', 'localtime')
+            """
+        elif filter_status == 'not_started':
+            where = """
+                p.status = 1
+                AND datetime(p.start_time) >
+                    datetime('now', 'localtime')
+            """
+        else:
+            where = "p.status = 1"
+
+        polls_list = conn.execute(f"""
+            SELECT
+                p.id,
+                p.question,
+                p.start_time,
+                p.end_time,
+                p.poll_type,
+                p.share_token,
+                u.first_name,
+                u.last_name,
+                COUNT(v.id) as vote_count,
+                CASE
+                    WHEN datetime(p.end_time) <=
+                         datetime('now', 'localtime')
+                        THEN 'Expired'
+                    WHEN datetime(p.start_time) >
+                         datetime('now', 'localtime')
+                        THEN 'Not Started'
+                    ELSE 'Active'
+                END as poll_status
+            FROM polls p
+            LEFT JOIN votes v ON v.poll_id = p.id
+            LEFT JOIN users u ON u.id = p.user_id
+            WHERE {where}
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        """).fetchall()
+
+        report_data = {
+            'total_polls':      total_polls,
+            'active_polls':     active_polls,
+            'expired_polls':    expired_polls,
+            'not_started_polls': not_started_polls,
+            'total_votes':      total_votes,
+            'polls_this_month': polls_this_month,
+            'polls_list':       polls_list
+        }
+
+    conn.close()
+
+    return render_template('admin_reports.html',
+                           active_page   = 'admin_reports',
+                           report_type   = report_type,
+                           filter_status = filter_status,
+                           report_data   = report_data)
+
+    conn.close()
+    return render_template('admin_reports.html', active_page='admin_reports')
+
+
+
+
+
 #         SELECT polls.*, users.first_name, users.last_name
 #         FROM polls
 #         JOIN users ON polls.user_id = users.id
@@ -889,7 +1284,7 @@ def logout():
     session.pop('user_id', None)
     session.pop('user_name', None)
     session.pop('role', None)
-    flash('You have been logged out.', 'info')
+   
     return redirect(url_for('poll.index'))  
 
 

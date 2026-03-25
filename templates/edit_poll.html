@@ -199,6 +199,7 @@
 <script>
     // Pass existing data to JS
     const POLL_ID      = {{ poll.id }};
+    const POLL_TOKEN = "{{ poll.share_token }}";
     const VOTE_COUNT   = {{ vote_count }};
     const EXISTING_OPTIONS = {{ options_data | tojson }};
     const CURRENT_TYPE = "{{ poll.poll_type }}";

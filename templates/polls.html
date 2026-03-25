@@ -73,14 +73,14 @@
                     <div class="pl-card-actions">
 
                         {% if poll.status != 'Expired' %}
-                        <a href="/poll/{{ poll.id }}"
+                        <a href="/poll/{{ poll.share_token }}"
                            class="pl-btn-vote">
                             <i class="bi bi-hand-index-thumb-fill me-1"></i>
                             Vote
                         </a>
                         {% endif %}
 
-                        <a href="/poll/{{ poll.id }}/results"
+                        <a href="/poll/{{ poll.share_token }}/results"
                            class="pl-btn-results">
                             <i class="bi bi-bar-chart-fill me-1"></i>
                             Results

@@ -35,7 +35,7 @@ def submit_vote(token):
     if start_time_raw:
         start_time_raw = start_time_raw.replace("T"," ")[:19]
         start_dt = datetime.fromisoformat(start_time_raw)
-        if datetime.now() < start_dt:
+        if datetime.utcnow() < start_dt:
             conn.close()
             return jsonify({
                 "error":       "This poll hasn't started yet.",
@@ -45,7 +45,7 @@ def submit_vote(token):
     # ── Step 2b: Check expiry ─────────────────────────────
     end_time_raw = poll["end_time"].replace("T"," ")[:19]
     end_dt       = datetime.fromisoformat(end_time_raw)
-    if datetime.now() > end_dt:
+    if datetime.utcnow() > end_dt:
         conn.close()
         return jsonify({
             "error":        "This poll has expired.",

@@ -78,7 +78,7 @@ def dashboard():
     #active polls
     active_polls = conn.execute("""
         SELECT COUNT(*) as count FROM polls 
-        WHERE user_id = ? AND end_time > datetime('now', 'localtime')
+        WHERE user_id = ? AND end_time > datetime('now')
     """, (user_id,)).fetchone()['count']
 
     #total votes across all user_id
@@ -101,9 +101,9 @@ def dashboard():
             u.first_name,         
             u.last_name,  
             CASE 
-                WHEN datetime(p.end_time) <= datetime('now', 'localtime')
+                WHEN datetime(p.end_time) <= datetime('now')
                     THEN 'Expired'
-                 WHEN datetime(p.start_time) > datetime('now', 'localtime')
+                 WHEN datetime(p.start_time) > datetime('now')
                     THEN 'Not Started'
                 ELSE 'Active'
             END as status
@@ -164,9 +164,9 @@ def my_polls():
         
             COUNT(v.id) as vote_count,
             CASE
-                WHEN datetime(p.end_time) <= datetime('now', 'localtime')
+                WHEN datetime(p.end_time) <= datetime('now')
                     THEN 'Expired'
-                 WHEN datetime(p.start_time) > datetime('now', 'localtime')
+                 WHEN datetime(p.start_time) > datetime('now')
                     THEN 'Not Started'
                 ELSE 'Active'
             END as status
@@ -556,9 +556,9 @@ def polls_list():
             u.last_name,
             COUNT(v.id) as vote_count,
             CASE 
-                WHEN datetime(p.end_time) <= datetime('now', 'localtime')
+                WHEN datetime(p.end_time) <= datetime('now')
                     THEN 'Expired'
-                 WHEN datetime(p.start_time) > datetime('now', 'localtime')
+                 WHEN datetime(p.start_time) > datetime('now')
                     THEN 'Not Started'
                 ELSE 'Active'
             END as status
@@ -646,7 +646,7 @@ def add_user():
         conn.execute("""
             INSERT INTO users (first_name, last_name, email, password,
                                created_at, status)
-            VALUES (?, ?, ?, ?, datetime('now', 'localtime'), 1)
+            VALUES (?, ?, ?, ?, datetime('now'), 1)
         """, (fname, lname, email, hashed_password))
         conn.commit()
 
@@ -706,7 +706,7 @@ def admin_dashboard():
             SELECT COUNT(*) as count FROM polls
             WHERE user_id = ?
             AND status = 1
-            AND end_time > datetime('now', 'localtime')
+            AND end_time > datetime('now')
         """, (filter_user,)).fetchone()['count']
 
     else:
@@ -723,7 +723,7 @@ def admin_dashboard():
         active_polls = conn.execute("""
             SELECT COUNT(*) as count FROM polls
             WHERE status = 1
-            AND end_time > datetime('now', 'localtime')
+            AND end_time > datetime('now')
         """).fetchone()['count']
 
     # ── Recent polls ──────────────────────────────────────
@@ -1166,23 +1166,23 @@ def admin_reports():
             SELECT COUNT(*) as count FROM polls
             WHERE status = 1
             AND datetime(end_time) >
-                datetime('now', 'localtime')
+                datetime('now')
             AND datetime(start_time) <=
-                datetime('now', 'localtime')
+                datetime('now')
         """).fetchone()['count']
 
         expired_polls = conn.execute("""
             SELECT COUNT(*) as count FROM polls
             WHERE status = 1
             AND datetime(end_time) <=
-                datetime('now', 'localtime')
+                datetime('now')
         """).fetchone()['count']
 
         not_started_polls = conn.execute("""
             SELECT COUNT(*) as count FROM polls
             WHERE status = 1
             AND datetime(start_time) >
-                datetime('now', 'localtime')
+                datetime('now')
         """).fetchone()['count']
 
         total_votes = conn.execute("""
@@ -1202,21 +1202,21 @@ def admin_reports():
             where = """
                 p.status = 1
                 AND datetime(p.end_time) >
-                    datetime('now', 'localtime')
+                    datetime('now')
                 AND datetime(p.start_time) <=
-                    datetime('now', 'localtime')
+                    datetime('now')
             """
         elif filter_status == 'expired':
             where = """
                 p.status = 1
                 AND datetime(p.end_time) <=
-                    datetime('now', 'localtime')
+                    datetime('now')
             """
         elif filter_status == 'not_started':
             where = """
                 p.status = 1
                 AND datetime(p.start_time) >
-                    datetime('now', 'localtime')
+                    datetime('now')
             """
         else:
             where = "p.status = 1"
@@ -1234,10 +1234,10 @@ def admin_reports():
                 COUNT(v.id) as vote_count,
                 CASE
                     WHEN datetime(p.end_time) <=
-                         datetime('now', 'localtime')
+                         datetime('now')
                         THEN 'Expired'
                     WHEN datetime(p.start_time) >
-                         datetime('now', 'localtime')
+                         datetime('now')
                         THEN 'Not Started'
                     ELSE 'Active'
                 END as poll_status

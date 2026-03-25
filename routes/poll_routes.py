@@ -70,7 +70,7 @@ def create_poll():
         start_dt = datetime.fromisoformat(start_time)
         end_dt   = datetime.fromisoformat(end_time)
 
-        if start_dt <= datetime.utcnow():
+        if start_dt <= datetime.now():
             return jsonify({
                 "error": "Start time must be in the future."
             }), 400
@@ -240,7 +240,7 @@ def vote_page(token):
         "end_time":   poll["end_time"],
     }
 
-    now         = datetime.utcnow()
+    now         = datetime.now()
     end_time_raw = poll["end_time"].replace("T", " ")[:19]
     end_dt      = datetime.fromisoformat(end_time_raw)
     is_expired  = now >= end_dt
@@ -279,7 +279,7 @@ def results_page(token):
     # ── Check expiry ──────────────────────────────────────
     end_dt     = datetime.fromisoformat(
                      poll["end_time"].replace("T"," ")[:19])
-    is_expired = datetime.utcnow() > end_dt
+    is_expired = datetime.now() > end_dt
 
     # ── Who is visiting? ──────────────────────────────────
     user_id    = session.get('user_id')

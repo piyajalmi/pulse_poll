@@ -121,7 +121,7 @@ def init_db():
                                email, password, role,
                                created_at, status)
             VALUES (?, ?, ?, ?, 'admin',
-                    datetime('now'), 1)
+                    datetime('now', 'localtime'), 1)
         """, (
             'Pia',
             'Jalmi',

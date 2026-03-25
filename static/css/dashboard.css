@@ -2131,9 +2131,9 @@
 }
 
 /* Users header */
-.rp-table-head:first-of-type {
+.rp-table-head:has(span:nth-child(7)) {
     grid-template-columns:
-        0.3fr 1.5fr 1.8fr 0.8fr 0.8fr 0.7fr;
+        0.3fr 2fr 1fr 0.7fr 0.5fr 1fr 0.8fr;
 }
 
 .rp-table-row:last-child {

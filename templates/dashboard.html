@@ -112,6 +112,7 @@
 </div>
 
 {% if recent_polls %}
+<div class="db-polls-table">
 <div class="db-polls-table-header"
      style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
     <span>Question</span>
@@ -162,7 +163,7 @@
            title="View Results">
             <i class="bi bi-bar-chart-fill"></i>
         </a>
-        <a href="/poll/{{ poll.share_token }}"
+        <a href="/dashboard/poll/{{ poll.share_token }}"
            class="db-action-btn"
            title="Vote">
             <i class="bi bi-eye-fill"></i>

@@ -94,6 +94,7 @@ def dashboard():
             p.id,
             p.question,
             p.end_time,
+            p.share_token,
             p.user_id,
             COUNT(v.id) as vote_count,
             u.first_name,         
@@ -969,6 +970,7 @@ def admin_edit_user(user_id):
 
     try:
         if password:
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             # Update with new password
             conn.execute("""
                 UPDATE users
@@ -976,7 +978,7 @@ def admin_edit_user(user_id):
                     email=?, password=?, status=?
                 WHERE id=?
             """, (first_name, last_name,
-                  email, password,
+                  email, hashed_password,
                   status, user_id))
         else:
             # Update without changing password
@@ -1264,8 +1266,7 @@ def admin_reports():
                            filter_status = filter_status,
                            report_data   = report_data)
 
-    conn.close()
-    return render_template('admin_reports.html', active_page='admin_reports')
+   
 
 
 

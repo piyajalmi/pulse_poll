@@ -53,12 +53,12 @@
           {% if session.get('user_name') %}
           {% set user_role=session.get('role') %}
               {% if user_role == 'admin' %}
-              <a href="/admin/dashboard" type="button" class="btn btn-outline-primary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+              <a href="/admin/dashboard" type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
                 {% else %}
-              <a href="/dashboard" type="button" class="btn btn-outline-primary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+              <a href="/dashboard" type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
                 {% endif %}
                 <div class="dropdown">
-            <a href="#" class="btn btn-outline-primary btn-sm border border-0 dropdown-toggle" 
+            <a href="#" class="btn btn-sm border border-0 dropdown-toggle" 
        style="color:#c7d2fe;" role="button" id="userDropdown" 
        data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-person-circle me-1"></i> {{ session['user_name'] }}
@@ -66,7 +66,7 @@
             
              <ul class="dropdown-menu" aria-labelledby="userDropdown">
                 <li>
-            <a  class="dropdown-item"href="/logout" style="color:#c7d2fe; font-size:0.9rem; text-decoration:none; font-weight:500;">
+            <a  class="dropdown-item"href="/logout" style="color:#000; font-size:0.9rem; text-decoration:none; font-weight:500;">
               <i class="bi bi-box-arrow-right me-1"></i> Logout
             </a>
             </li>
@@ -195,26 +195,6 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll(".local-time")
-            .forEach(function(el) {
-        const utcStr = el.textContent.trim();
-        if (!utcStr || utcStr === "—") return;
-        const utcDate = new Date(
-            utcStr.replace(" ", "T") + "Z"
-        );
-        el.textContent = utcDate.toLocaleString('en-IN', {
-            day:    '2-digit',
-            month:  '2-digit',
-            year:   'numeric',
-            hour:   '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
-    });
-});
-</script>
 
     {% block extra_js %}{% endblock %}
 </body>

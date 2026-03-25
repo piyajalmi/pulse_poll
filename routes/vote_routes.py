@@ -15,20 +15,21 @@ def get_socketio():
 
 
 # ── POST /poll/<poll_id>/vote ─────────────────────────────
-@vote_bp.route("/poll/<int:poll_id>/vote", methods=["POST"])
-def submit_vote(poll_id):
+@vote_bp.route("/poll/<string:token>/vote", methods=["POST"])
+def submit_vote(token):
 
     conn = get_db_connection()
 
     # ── Step 1: Get poll ──────────────────────────────────
     poll = conn.execute(
-        "SELECT * FROM polls WHERE id = ?", (poll_id,)
+        "SELECT * FROM polls WHERE share_token = ?", (token,)
     ).fetchone()
 
     if not poll:
         conn.close()
         return jsonify({"error": "Poll not found."}), 404
 
+    poll_id = poll["id"]
     # ── Step 2a: Check not started ────────────────────────
     start_time_raw = poll["start_time"]
     if start_time_raw:
@@ -49,7 +50,7 @@ def submit_vote(poll_id):
         return jsonify({
             "error":        "This poll has expired.",
             "is_expired":   True,
-            "results_link": f"/poll/{poll_id}/results"
+            "results_link": f"/poll/{poll['share_token']}/results"
         }), 400
 
     # ── Step 3: Check duplicate via session ───────────────
@@ -206,18 +207,20 @@ def submit_vote(poll_id):
 
 
 # ── GET /api/poll/<poll_id>/results ───────────────────────
-@vote_bp.route("/api/poll/<int:poll_id>/results",
+@vote_bp.route("/api/poll/<string:token>/results",
                methods=["GET"])
-def get_results(poll_id):
+def get_results(token):
 
     conn = get_db_connection()
     poll = conn.execute(
-        "SELECT * FROM polls WHERE id = ?", (poll_id,)
+        "SELECT * FROM polls WHERE share_token = ?", (token,)
     ).fetchone()
 
     if not poll:
         conn.close()
         return jsonify({"error": "Poll not found."}), 404
+
+    poll_id = poll["id"]
 
     options = conn.execute("""
         SELECT id, option FROM options

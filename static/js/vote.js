@@ -108,7 +108,7 @@ async function submitVote() {
     const submissionId = generateUUID();
 
     try {
-        const response = await fetch(`/poll/${POLL_ID}/vote`, {
+        const response = await fetch(`/poll/${POLL_TOKEN}/vote`, {
             method:  "POST",
             headers: { "Content-Type": "application/json" },
             body:    JSON.stringify({
@@ -125,7 +125,7 @@ async function submitVote() {
                 Vote Submitted!`;
             setTimeout(() => {
                 window.location.href =
-                    `/poll/${POLL_ID}/results`;
+                    `/poll/${POLL_TOKEN}/results`;
             }, 1000);
 
         } else {

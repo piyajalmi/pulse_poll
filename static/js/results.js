@@ -60,7 +60,7 @@ function initWebSocket() {
 async function fetchResults() {
     try {
         const response = await fetch(
-            `/api/poll/${POLL_ID}/results`
+            `/api/poll/${POLL_TOKEN}/results`
         );
         const data = await response.json();
 

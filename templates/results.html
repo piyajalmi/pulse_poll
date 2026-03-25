@@ -89,7 +89,7 @@
                     <div class="d-flex gap-3
                                 justify-content-center
                                 mt-4 flex-wrap">
-                        <a href="/poll/{{ poll.id }}"
+                        <a href="/poll/{{ poll.share_token }}"
                            class="btn btn-pp-outline">
                             <i class="bi bi-arrow-left
                                       me-2"></i>
@@ -97,7 +97,7 @@
                         </a>
                     </div>
 
-                    <div class="pp-share-box mt-4">
+                    <!-- <div class="pp-share-box mt-4">
                         <small class="text-muted">
                             Share results:
                         </small>
@@ -121,7 +121,7 @@
                             <i class="bi bi-check2 me-1"></i>
                             Link copied!
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 {% elif has_voted %}
@@ -153,12 +153,12 @@
                     </div>
                     {% endif %}
 
-                    <div class="rv-locked-msg mb-4">
+                    <!-- <div class="rv-locked-msg mb-4">
                         <i class="bi bi-lock-fill me-2"
                            style="color:#94a3b8;"></i>
                         Results will be available
                         once the poll ends.
-                    </div>
+                    </div> -->
 
                     <a href="/"
                        class="btn btn-pp-primary">
@@ -177,11 +177,11 @@
                         style="color:#1e1b4b;">
                         Poll is still running
                     </h4>
-                    <p class="text-muted mb-4">
+                    <!-- <p class="text-muted mb-4">
                         Results will be visible
                         once voting ends.
-                    </p>
-                    <a href="/poll/{{ poll.id }}"
+                    </p> -->
+                    <a href="/poll/{{ poll.share_token }}"
                        class="btn btn-pp-primary">
                         <i class="bi bi-hand-index-thumb
                                   me-2"></i>

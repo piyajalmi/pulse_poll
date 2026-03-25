@@ -25,6 +25,7 @@ def init_db():
             user_id INTEGER, 
             poll_type  VARCHAR(10) DEFAULT 'single'
                    CHECK(poll_type IN ('single', 'multiple')),
+            share_token VARCHAR(40) UNIQUE,
             created_at TIMESTAMP,
             created_id INTEGER,
             status TINYINT DEFAULT 1,

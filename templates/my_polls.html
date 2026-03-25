@@ -82,7 +82,7 @@
                 {% if poll.status == 'Active'  or poll.status == 'Not Started'%}
 
                 <!-- Edit button -->
-    <a href="/dashboard/poll/{{ poll.id }}/edit"
+    <a href="/dashboard/poll/{{ poll.share_token }}/edit"
        class="mp-btn-edit">
         <i class="bi bi-pencil-fill me-1"></i>
         Edit
@@ -90,14 +90,14 @@
 
                 <!-- Delete only for active polls -->
                 <button class="mp-btn-delete"
-                        onclick="confirmDelete({{ poll.id }}, '{{ poll.question[:30] }}')">
+                        onclick="confirmDelete('{{ poll.share_token }}', '{{ poll.question[:30] }}')">
                     <i class="bi bi-trash3-fill me-1"></i>
                     Delete
                 </button>
                 {% endif %}
 
                 <!-- View always visible -->
-                <a href="/dashboard/poll/{{ poll.id }}"
+                <a href="/dashboard/poll/{{ poll.share_token }}"
                    class="mp-btn-view">
                     <i class="bi bi-eye-fill me-1"></i>
                     View
@@ -200,8 +200,8 @@
     let pollToDelete = null;
 
     // Show warning modal
-    function confirmDelete(pollId, pollName) {
-        pollToDelete = pollId;
+    function confirmDelete(token, pollName) {
+        pollToDelete = token;
         document.getElementById("deletePollName")
                 .textContent = pollName + "...";
         const modal = new bootstrap.Modal(

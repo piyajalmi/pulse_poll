@@ -497,8 +497,7 @@
 {% block extra_js %}
 <script>
     function joinPoll() {
-        const pollId = document.getElementById("pollIdInput")
-                               .value.trim();
+        const pollId = document.getElementById("pollIdInput").value.trim();
         const errorDiv = document.getElementById("joinError");
 
         if (!pollId) {
@@ -507,7 +506,7 @@
         }
 
         errorDiv.classList.add("d-none");
-        window.location.href = `/poll/${pollId}`;
+        window.location.href = pollId;
     }
 
     // Allow pressing Enter key to join

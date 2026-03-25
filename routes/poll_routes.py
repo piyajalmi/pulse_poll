@@ -5,6 +5,13 @@ from models import get_db_connection
 import base64
 import uuid
 import os
+import secrets
+import string
+
+def generate_share_token():
+    '''Generate unique 12 char alphanumeric token'''
+    chars = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(12))
 
 poll_bp = Blueprint('poll', __name__)
 
@@ -49,7 +56,11 @@ def create_poll():
             "error": "Poll question is required."
         }), 400
 
-    valid_options = [o for o in options if o.get("text","").strip()]
+    valid_options = [
+        o for o in options 
+        if o.get("text","").strip() or o.get("file_base64")
+    ]
+    
     if len(valid_options) < 2:
         return jsonify({
             "error": "At least 2 options with text required."
@@ -76,17 +87,26 @@ def create_poll():
 
     # ── Step 4: Save poll to DB ───────────────────────────
     conn   = get_db_connection()
+    while True:
+        token = generate_share_token()  
+        existing = conn.execute(
+            "SELECT id FROM polls WHERE share_token = ?",
+            (token,)
+        ).fetchone()
+        if not existing:
+            break
     cursor = conn.execute("""
         INSERT INTO polls (question, start_time, end_time,
-                           user_id, poll_type,
+                           user_id, poll_type,share_token,
                            created_at, created_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         question,
         start_time,
         end_time,
         session.get('user_id'),
         poll_type,
+        token,
         datetime.now().isoformat(),
         session.get('user_id')
     ))
@@ -171,22 +191,23 @@ def create_poll():
 
 
 # ── GET /poll/<poll_id> (Vote Page) ───────────────────────
-@poll_bp.route("/poll/<int:poll_id>", methods=["GET"])
-def vote_page(poll_id):
+@poll_bp.route("/poll/<string:token>", methods=["GET"])
+def vote_page(token):
     # Must be logged in to vote
     if 'user_id' not in session:
         return redirect(url_for('login'))
     conn = get_db_connection()
 
     poll = conn.execute(
-        "SELECT * FROM polls WHERE id = ? AND status = 1",
-        (poll_id,)
+        "SELECT * FROM polls WHERE share_token = ? AND status = 1",
+        (token,)
     ).fetchone()
 
     if not poll:
         conn.close()
         return render_template("404.html"), 404
 
+    poll_id = poll["id"]
     # Fetch options WITH media info
     options = conn.execute("""
         SELECT
@@ -207,6 +228,7 @@ def vote_page(poll_id):
         "id":        poll["id"],
         "question":  poll["question"],
         "poll_type": poll["poll_type"],
+        "share_token": poll["share_token"],
         "options": [{
             "id":            o["id"],
             "text":          o["option"],
@@ -241,18 +263,19 @@ def vote_page(poll_id):
 
 
 # ── GET /poll/<poll_id>/results ───────────────────────────
-@poll_bp.route("/poll/<int:poll_id>/results")
-def results_page(poll_id):
+@poll_bp.route("/poll/<string:token>/results")
+def results_page(token):
     conn = get_db_connection()
 
     poll = conn.execute(
-        "SELECT * FROM polls WHERE id = ?", (poll_id,)
+        "SELECT * FROM polls WHERE share_token = ?", (token,)
     ).fetchone()
 
     if not poll:
         conn.close()
         return render_template("404.html"), 404
 
+    poll_id = poll["id"]
     # ── Check expiry ──────────────────────────────────────
     end_dt     = datetime.fromisoformat(
                      poll["end_time"].replace("T"," ")[:19])
@@ -289,6 +312,7 @@ def results_page(poll_id):
         "question": poll["question"],
         "end_time": poll["end_time"],
         "user_id":  poll["user_id"],
+        "share_token": poll["share_token"]
     }
 
     #showing results to creator and after expiry only

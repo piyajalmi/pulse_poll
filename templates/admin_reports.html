@@ -1,0 +1,525 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Reports — Admin PulsePoll{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ────────────────────────────────────── -->
+<div class="db-page-header mb-4">
+    <div>
+        <h4 class="db-page-title">
+            <i class="bi bi-file-earmark-bar-graph-fill
+                      me-2"
+               style="color:#4f46e5;"></i>
+            Reports
+        </h4>
+        <p class="db-page-subtitle">
+            Generate and export system reports
+        </p>
+    </div>
+</div>
+
+<!-- ── Report Selector ────────────────────────────────── -->
+<div class="rp-selector-card mb-4">
+    <form method="GET" action="/admin/reports"
+          id="reportForm">
+
+        <div class="rp-selector-row">
+            <div class="rp-selector-group">
+                <label class="rp-selector-label">
+                    <i class="bi bi-bar-chart me-1"></i>
+                    Select Report Type
+                </label>
+                <select name="type"
+                        id="reportType"
+                        class="rp-selector-select"
+                        onchange="this.form.submit()">
+                    <option value="">
+                        — Select a report —
+                    </option>
+                    <option value="users"
+                        {% if report_type == 'users' %}
+                        selected{% endif %}>
+                        👥 Users Summary Report
+                    </option>
+                    <option value="polls"
+                        {% if report_type == 'polls' %}
+                        selected{% endif %}>
+                        📊 Polls Summary Report
+                    </option>
+                </select>
+            </div>
+
+            <!-- Status filter — only show when
+                 report is selected -->
+            {% if report_type %}
+            <div class="rp-selector-group">
+                <label class="rp-selector-label">
+                    <i class="bi bi-funnel me-1"></i>
+                    Filter by Status
+                </label>
+                <select name="status"
+                        class="rp-selector-select"
+                        onchange="this.form.submit()">
+                    {% if report_type == 'users' %}
+                    <option value=""
+                        {% if not filter_status %}
+                        selected{% endif %}>
+                        All Users
+                    </option>
+                    <option value="active"
+                        {% if filter_status == 'active' %}
+                        selected{% endif %}>
+                        Active Only
+                    </option>
+                    <option value="inactive"
+                        {% if filter_status == 'inactive' %}
+                        selected{% endif %}>
+                        Inactive Only
+                    </option>
+
+                    {% elif report_type == 'polls' %}
+                    <option value=""
+                        {% if not filter_status %}
+                        selected{% endif %}>
+                        All Status
+                    </option>
+                    <option value="active"
+                        {% if filter_status == 'active' %}
+                        selected{% endif %}>
+                        Active Only
+                    </option>
+                    <option value="expired"
+                        {% if filter_status == 'expired' %}
+                        selected{% endif %}>
+                        Expired Only
+                    </option>
+                    <option value="not_started"
+                        {% if filter_status == 'not_started' %}
+                        selected{% endif %}>
+                        Not Started
+                    </option>
+                    {% endif %}
+                </select>
+            </div>
+
+            <!-- Export PDF button -->
+            <div class="rp-selector-group
+                        rp-selector-action">
+                <label class="rp-selector-label">
+                    &nbsp;
+                </label>
+                <button type="button"
+                        class="rp-export-btn"
+                        onclick="exportPDF()">
+                    <i class="bi bi-file-pdf-fill me-2"></i>
+                    Export PDF
+                </button>
+            </div>
+            {% endif %}
+
+        </div>
+    </form>
+</div>
+
+<!-- ── No report selected ─────────────────────────────── -->
+{% if not report_type %}
+<div class="rp-empty-state">
+    <i class="bi bi-bar-chart-line"></i>
+    <h5>Select a report to get started</h5>
+    <p>Choose a report type from the dropdown above</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     USERS SUMMARY REPORT
+     ══════════════════════════════════════════════════════ -->
+{% elif report_type == 'users' %}
+
+<!-- Print header — only visible in PDF -->
+<div class="rp-print-header">
+    <h2>PulsePoll — Users Summary Report</h2>
+    <p>Generated on:
+        <strong id="printDate"></strong>
+    </p>
+    <p>Filter:
+        <strong>
+            {{ filter_status.title()
+               if filter_status else 'All Users' }}
+        </strong>
+    </p>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4" id="reportContent">
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-blue">
+            <div class="rp-stat-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.total_users }}
+                </div>
+                <div class="rp-stat-label">
+                    Total Users
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-green">
+            <div class="rp-stat-icon">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.active_users }}
+                </div>
+                <div class="rp-stat-label">
+                    Active Users
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-red">
+            <div class="rp-stat-icon">
+                <i class="bi bi-person-x-fill"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.inactive_users }}
+                </div>
+                <div class="rp-stat-label">
+                    Inactive Users
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-purple">
+            <div class="rp-stat-icon">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.new_this_month }}
+                </div>
+                <div class="rp-stat-label">
+                    New This Month
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="rp-table-card">
+    <div class="rp-table-header">
+        <h6 class="rp-table-title">
+            {% if filter_status == 'active' %}
+            Active Users
+            {% elif filter_status == 'inactive' %}
+            Inactive Users
+            {% else %}
+            All Users
+            {% endif %}
+            <span class="rp-count-badge">
+                {{ report_data.users_list | length }}
+            </span>
+        </h6>
+    </div>
+
+    {% if report_data.users_list %}
+    <div class="rp-table">
+
+        <!-- Header -->
+        <div class="rp-table-row rp-table-head">
+            <span>#</span>
+            <span>Name</span>
+            <span>Email</span>
+            <span>Polls Created</span>
+            <span>Joined Date</span>
+            <span>Status</span>
+        </div>
+
+        <!-- Rows -->
+        {% for user in report_data.users_list %}
+        <div class="rp-table-row">
+            <span class="rp-cell-muted">
+                {{ loop.index }}
+            </span>
+            <span class="rp-cell-bold">
+                {{ user.first_name }} {{ user.last_name }}
+            </span>
+            <span class="rp-cell-muted">
+                {{ user.email }}
+            </span>
+            <span class="rp-cell-bold">
+                {{ user.poll_count }}
+            </span>
+            <span class="rp-cell-muted">
+                {{ user.created_at[:10]
+                   if user.created_at else '—' }}
+            </span>
+            <span>
+                <span class="au-status-badge
+                    {% if user.status == 1 %}
+                    au-status-active
+                    {% else %}
+                    au-status-banned
+                    {% endif %}">
+                    {{ 'Active' if user.status == 1
+                       else 'Inactive' }}
+                </span>
+            </span>
+        </div>
+        {% endfor %}
+
+    </div>
+    {% else %}
+    <div class="rp-no-data">
+        <i class="bi bi-inbox"></i>
+        <p>No users found.</p>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     POLLS SUMMARY REPORT
+     ══════════════════════════════════════════════════════ -->
+{% elif report_type == 'polls' %}
+
+<!-- Print header -->
+<div class="rp-print-header">
+    <h2>PulsePoll — Polls Summary Report</h2>
+    <p>Generated on:
+        <strong id="printDate"></strong>
+    </p>
+    <p>Filter:
+        <strong>
+            {{ filter_status.replace('_',' ').title()
+               if filter_status else 'All Polls' }}
+        </strong>
+    </p>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-blue">
+            <div class="rp-stat-icon">
+                <i class="bi bi-bar-chart-fill"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.total_polls }}
+                </div>
+                <div class="rp-stat-label">
+                    Total Polls
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-green">
+            <div class="rp-stat-icon">
+                <i class="bi bi-lightning-fill"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.active_polls }}
+                </div>
+                <div class="rp-stat-label">
+                    Active Polls
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-red">
+            <div class="rp-stat-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.expired_polls }}
+                </div>
+                <div class="rp-stat-label">
+                    Expired Polls
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-yellow">
+            <div class="rp-stat-icon">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.not_started_polls }}
+                </div>
+                <div class="rp-stat-label">
+                    Not Started
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Extra stats row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-purple">
+            <div class="rp-stat-icon">
+                <i class="bi bi-hand-index-thumb-fill">
+                </i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.total_votes }}
+                </div>
+                <div class="rp-stat-label">
+                    Total Votes
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="rp-stat-card rp-stat-blue">
+            <div class="rp-stat-icon">
+                <i class="bi bi-calendar-plus"></i>
+            </div>
+            <div class="rp-stat-info">
+                <div class="rp-stat-number">
+                    {{ report_data.polls_this_month }}
+                </div>
+                <div class="rp-stat-label">
+                    Created This Month
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Polls Table -->
+<div class="rp-table-card">
+    <div class="rp-table-header">
+        <h6 class="rp-table-title">
+            {% if filter_status %}
+            {{ filter_status.replace('_',' ').title() }}
+            Polls
+            {% else %}
+            All Polls
+            {% endif %}
+            <span class="rp-count-badge">
+                {{ report_data.polls_list | length }}
+            </span>
+        </h6>
+    </div>
+
+    {% if report_data.polls_list %}
+    <div class="rp-table">
+
+        <!-- Header -->
+        <div class="rp-table-row rp-table-head">
+            <span>#</span>
+            <span>Question</span>
+            <span>Created By</span>
+            <span>Type</span>
+            <span>Votes</span>
+            <span>End Time</span>
+            <span>Status</span>
+        </div>
+
+        <!-- Rows -->
+        {% for poll in report_data.polls_list %}
+        <div class="rp-table-row">
+            <span class="rp-cell-muted">
+                {{ loop.index }}
+            </span>
+            <span class="rp-cell-bold">
+                {{ poll.question }}
+            </span>
+            <span class="rp-cell-muted">
+                {{ poll.first_name }} {{ poll.last_name }}
+            </span>
+            <span>
+                <span class="admin-type-badge
+                    {% if poll.poll_type == 'multiple' %}
+                    admin-type-multiple
+                    {% else %}
+                    admin-type-single
+                    {% endif %}">
+                    {{ poll.poll_type.title() }}
+                </span>
+            </span>
+            <span class="rp-cell-bold">
+                {{ poll.vote_count }}
+            </span>
+            <span class="rp-cell-muted">
+                {{ poll.end_time[:16].replace('T',' ') }}
+            </span>
+            <span>
+                <span class="db-poll-badge
+                    {% if poll.poll_status == 'Active' %}
+                    db-badge-active
+                    {% elif poll.poll_status == 'Not Started' %}
+                    mp-badge-not-started
+                    {% else %}
+                    mp-badge-expired
+                    {% endif %}">
+                    {{ poll.poll_status }}
+                </span>
+            </span>
+        </div>
+        {% endfor %}
+
+    </div>
+    {% else %}
+    <div class="rp-no-data">
+        <i class="bi bi-inbox"></i>
+        <p>No polls found.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Set print date ────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function() {
+    const dateEl = document.getElementById("printDate");
+    if (dateEl) {
+        dateEl.textContent = new Date().toLocaleDateString(
+            'en-IN', {
+                day:   '2-digit',
+                month: 'long',
+                year:  'numeric'
+            }
+        );
+    }
+});
+
+// ── Export PDF using browser print ───────────────────────
+function exportPDF() {
+    // Add print class to body
+    document.body.classList.add("printing");
+    window.print();
+    // Remove after print dialog closes
+    document.body.classList.remove("printing");
+}
+</script>
+{% endblock %}

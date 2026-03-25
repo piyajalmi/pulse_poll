@@ -262,7 +262,7 @@ async function submitEdit() {
 
     try {
         const response = await fetch(
-            `/dashboard/poll/${POLL_ID}/edit`, {
+            `/dashboard/poll/${POLL_TOKEN}/edit`, {
             method:  "POST",
             headers: { "Content-Type": "application/json" },
             body:    JSON.stringify({

@@ -16,9 +16,11 @@ function setPollType(type) {
 
 // ── Set minimum date to today ───────────────────────────
 function setMinDateTime() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById("pollStartDate").min = today;
-    document.getElementById("pollEndDate").min   = today;
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const minVal = now.toISOString().slice(0, 16);
+    document.getElementById("pollStartDate").min = minVal;
+    document.getElementById("pollEndDate").min   = minVal;
 }
 
 // ── Add a new option row ────────────────────────────────
@@ -192,7 +194,9 @@ function validateForm(question, options, startDateTime, endDateTime) {
 
     // Validate options — need at least 2 with text
     const optionsError  = document.getElementById("optionsError");
-    const validOptions  = options.filter(o => o.text);
+    const validOptions  = options.filter(o => 
+        o.text || o.file_base64
+    );
     if (validOptions.length < 2) {
         optionsError.classList.remove("d-none");
         isValid = false;
@@ -225,18 +229,20 @@ function validateForm(question, options, startDateTime, endDateTime) {
 async function submitPoll() {
     const question      = document.getElementById("pollQuestion")
                                   .value.trim();
-    const startDate     = document.getElementById("pollStartDate").value;
-    const startTime     = document.getElementById("pollStartTime").value;
-    const endDate       = document.getElementById("pollEndDate").value;
-    const endTime       = document.getElementById("pollEndTime").value;
+    const startRaw      = document.getElementById("pollStartDate")
+                              .value;
+    const endRaw        = document.getElementById("pollEndDate")
+                              .value;
     const btn           = document.getElementById("createPollBtn");
     const message       = document.getElementById("formMessage");
 
     // Combine date + time
-    const startDateTime = startDate && startTime
-                          ? `${startDate} ${startTime}` : "";
-    const endDateTime   = endDate && endTime
-                          ? `${endDate} ${endTime}` : "";
+    const startDateTime = startRaw
+                      ? startRaw.replace("T", " ")
+                      : null;
+    const endDateTime   = endRaw
+                      ? endRaw.replace("T", " ")
+                      : null;
 
     // Collect options (async because of file reading)
     const options = await collectOptions();

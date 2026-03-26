@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import os
 # from select import poll
 import uuid
@@ -11,6 +13,7 @@ from functools import wraps
 from models import get_db_connection, init_db
 from datetime import datetime, timedelta, timezone
 import bcrypt
+
 from dotenv import load_dotenv
 load_dotenv()
 

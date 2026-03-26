@@ -199,7 +199,7 @@
 {% block extra_js %}
 <script>
     const POLL_ID    = "{{ poll.id }}";
-    const END_TIME   = "{{ poll.end_time }}";
+    const END_TIME   = "{{ poll.end_time.isoformat() if poll.end_time else '' }}";
     const IS_EXPIRED = "{{ is_expired }}" === "True";
     const SHOW_RESULTS = "{{ show_results }}" === "True";
 </script>

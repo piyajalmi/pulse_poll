@@ -262,7 +262,7 @@
                 {{ user.poll_count }}
             </span>
             <span class="rp-cell-muted">
-                {{ user.created_at[:10]
+                {{ user.created_at.strftime('%d %b %Y')
                    if user.created_at else '—' }}
             </span>
             <span>
@@ -467,7 +467,7 @@
                 {{ poll.vote_count }}
             </span>
             <span class="rp-cell-muted">
-                {{ poll.end_time[:16].replace('T',' ') }}
+                {{ poll.end_time.strftime('%d %b %Y, %I:%M %p') }}
             </span>
             <span>
                 <span class="db-poll-badge

@@ -1763,3 +1763,15 @@ h1 {
     font-weight: 500;
     display: inline-block;
 }
+.auth-input-wrap {
+    position: relative; /* Ensures the icon is positioned relative to this container */
+}
+
+#togglePassword {
+    position: absolute;
+    right: 10px; /* Adjust as needed for spacing */
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 100; /* Ensures the icon is clickable over the input */
+}

@@ -2098,8 +2098,9 @@
 
 .rp-table-row {
     display: grid;
-    padding: 12px 24px;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+    grid-template-columns: 50px 1.5fr 2fr 1fr 1.5fr 1fr;
     align-items: center;
     font-size: 0.85rem;
     transition: background 0.15s;
@@ -2122,9 +2123,10 @@
 }
 
 .rp-table-head {
-    background: #f8fafc;
+    background: #f9fafb;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
+    gap: 20px;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;

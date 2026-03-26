@@ -161,7 +161,7 @@
 
         <!-- End Time -->
         <span class="local-time">
-            {{ poll.end_time[:16].replace('T', ' ') }}
+            {{ poll.end_time.strftime('%d %b %Y, %I:%M %p') }}
         </span>
 
         <!-- Actions -->

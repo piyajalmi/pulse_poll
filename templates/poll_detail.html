@@ -49,7 +49,7 @@
             </span>
             <span>
                 <i class="bi bi-clock me-1"></i>
-                {{ poll.end_time[:16].replace('T', ' ') }}
+                {{ poll.end_time.strftime('%d %b %Y, %I:%M %p') }}
             </span>
             <span>
                 <i class="bi bi-hash me-1"></i>
@@ -220,7 +220,7 @@
                     {{ log.browser or 'Unknown' }}
                 </span>
                 <span class="pd-log-time">
-                    {{ log.created_at[:16].replace('T',' ')
+                    {{ log.created_at.strftime('%d %b %Y, %I:%M %p') 
                        if log.created_at else '—' }}
                 </span>
             </div>

@@ -68,8 +68,7 @@
 
         <!-- Joined -->
         <span class="au-user-joined">
-            {{ user.created_at[:10]
-               if user.created_at else '—' }}
+            {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}
         </span>
 
         <!-- Status -->

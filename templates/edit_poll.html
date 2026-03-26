@@ -163,13 +163,13 @@
                         <input type="date"
                                id="pollEndDate"
                                class="form-control pp-input"
-                               value="{{ poll.end_time[:10] }}">
+                               value="{{ poll.end_time.strftime('%Y-%m-%d') }}">
                     </div>
                     <div class="col-5">
                         <input type="time"
                                id="pollEndTime"
                                class="form-control pp-input"
-                               value="{{ poll.end_time[11:16] }}">
+                               value="{{ poll.end_time.strftime('%H:%M') }}">
                     </div>
                 </div>
                 <div class="text-danger small mt-1 d-none"

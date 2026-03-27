@@ -50,8 +50,15 @@
                 <span class="db-brand-poll">Poll</span>
             </span>
         </div>
-
         <div class="db-navbar-right">
+        {% set user_role=session.get('role') %}
+              {% if user_role == 'admin' %}
+              <a  type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+                {% else %}
+              <a  type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">USER</a>
+                {% endif %}
+        
+        <!-- <div class="db-navbar-right">
             <span class="db-username">
                 <i class="bi bi-person-circle me-2"></i>
                 {{ session['user_name'] }}
@@ -61,6 +68,22 @@
                 <i class="bi bi-box-arrow-right me-1"></i>
                 Logout
             </a>
+        </div> -->
+        <div class="dropdown">
+            <a href="#" class="btn btn-sm border border-0 dropdown-toggle" 
+       style="color:#c7d2fe;" role="button" id="userDropdown" 
+       data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle me-1"></i> {{ session['user_name'] }}
+            </a>
+            
+             <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                <li>
+            <a  class="dropdown-item"href="/logout" style="color:#000; font-size:0.9rem; text-decoration:none; font-weight:500;">
+              <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </a>
+            </li>
+        </ul>
+        </div>
         </div>
     </nav>
 

@@ -175,19 +175,33 @@
                 {% endif %}
             </h6>
 
-            {% if total_votes == 0 %}
-            <div class="pd-empty">
-                <i class="bi bi-pie-chart"></i>
-                <p>No votes yet to display.</p>
-            </div>
-            {% else %}
-            <div class="pd-chart-wrap">
-                <canvas id="pollChart"></canvas>
-            </div>
-            {% endif %}
+          {% if total_votes == 0 and not is_creator %}
+<div class="pd-empty">
+    <i class="bi bi-inbox"></i>
+    <p>No votes yet.</p>
+</div>
 
+{% else %}
+{% for option in options_data %}
+<div class="pd-option-row mb-3">
+    <div class="pd-option-header">
+        <span class="pd-option-text">
+            {{ option.text }}
+        </span>
+        <span class="pd-option-stat">
+            {{ option.votes }} votes
+            ({{ option.percentage }}%)
+        </span>
+    </div>
+    <div class="pd-progress-bg">
+        <div class="pd-progress-fill"
+             style="width: {{ option.percentage }}%">
         </div>
     </div>
+</div>
+{% endfor %}
+{% endif %}
+           
 
     <!-- ── TAB 3: Logs ────────────────────────────────── -->
     <div class="tab-pane fade" id="logsPanel">
@@ -203,7 +217,7 @@
             <div class="pd-logs-header">
                 <span>#</span>
                 <span>Encrypted ID</span>
-                <span>Browser</span>
+        
                 <span>Time</span>
             </div>
 
@@ -216,9 +230,8 @@
                 <span class="pd-log-enc">
                     {{ (log.encrypted_identifier or '') [:20] }}...
                 </span>
-                <span class="pd-log-browser">
-                    {{ log.browser or 'Unknown' }}
-                </span>
+                
+               
                 <span class="pd-log-time">
                     {{ log.created_at.strftime('%d %b %Y, %I:%M %p') 
                        if log.created_at else '—' }}

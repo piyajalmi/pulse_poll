@@ -305,7 +305,8 @@ def poll_detail(token):
                            options_data = options_data,
                            total_votes  = total_votes,
                            logs         = logs,
-                           is_expired   = is_expired)
+                           is_expired   = is_expired,
+                           is_creator = True)
 
 
 # ── Edit Poll GET ─────────────────────────────────────────
@@ -406,6 +407,17 @@ def edit_poll_submit(token):
             "error": "At least 2 options required."
         }), 400
 
+    option_texts = [
+    o.get("text", "").strip().lower()
+    for o in valid_options
+    if o.get("text", "").strip()
+    ]
+
+    if len(option_texts) != len(set(option_texts)):
+        return jsonify({
+        "error": "All options must be unique."
+        }), 400
+    
     try:
         ist =  pytz.timezone('Asia/Kolkata')
 

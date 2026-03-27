@@ -374,6 +374,20 @@
     transition: all 0.3s ease;
     cursor: pointer;
 }
+.db-main .col-12{
+    gap: 20px;
+}
+.db-main .btn-pp-secondary {
+    background-color:dimgray;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
 
 .db-main .btn-pp-primary:hover {
     background: linear-gradient(135deg, #4338ca, #6366f1);

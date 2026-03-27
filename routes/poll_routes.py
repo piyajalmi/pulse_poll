@@ -64,6 +64,17 @@ def create_poll():
         return jsonify({
             "error": "At least 2 options required."
         }), 400
+    
+    option_texts = [
+    o.get("text", "").strip().lower()
+    for o in valid_options
+    if o.get("text", "").strip()
+    ]
+
+    if len(option_texts) != len(set(option_texts)):
+        return jsonify({
+        "error": "All options must be unique."
+        }), 400
 
     try:
         start_dt = datetime.fromisoformat(start_time_raw)
@@ -319,7 +330,8 @@ def results_page(token):
         "share_token": poll["share_token"]
     }
 
-    show_results = is_expired or is_creator
+    is_admin = session.get('role') == 'admin'
+    show_results = is_expired or is_creator or is_admin
 
     return render_template("results.html",
                            poll         = poll_data,

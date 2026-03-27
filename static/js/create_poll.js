@@ -253,6 +253,18 @@ const endDateTime   = endRaw   ? toUTC(endRaw)   : null;
     // Collect options (async because of file reading)
     const options = await collectOptions();
 
+        // Checking duplicate options
+const optionTexts = options
+    .map(o => o.text.toLowerCase().trim())
+    .filter(t => t.length > 0);
+
+const uniqueTexts = new Set(optionTexts);
+if (uniqueTexts.size !== optionTexts.length) {
+    const optionsError = document.getElementById("optionsError");
+    optionsError.textContent = "Options must be unique!";
+    optionsError.classList.remove("d-none");
+    return;
+}
     // Validate
     if (!validateForm(question, options, startDateTime, endDateTime)) {
         return;

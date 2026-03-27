@@ -224,6 +224,17 @@ async function submitEdit() {
     // Collect options
     const options = await collectOptions();
 
+    const optionTexts = options
+    .map(o => o.text.toLowerCase().trim())
+    .filter(t => t.length > 0);
+
+const uniqueTexts = new Set(optionTexts);
+if (uniqueTexts.size !== optionTexts.length) {
+    const optionsError = document.getElementById("optionsError");
+    optionsError.textContent = "Options must be unique!";
+    optionsError.classList.remove("d-none");
+    return;
+}
     // ── Validate ──────────────────────────────────────────
     let valid = true;
 

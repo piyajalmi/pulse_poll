@@ -236,20 +236,8 @@ async function submitPoll() {
     const btn           = document.getElementById("createPollBtn");
     const message       = document.getElementById("formMessage");
 
-    // Combine date + time
-    function toUTC(localStr) {
-    const local = new Date(localStr);
-    const utc   = new Date(
-        local.getTime() -
-        local.getTimezoneOffset() * 60000
-    );
-    return utc.toISOString()
-              .slice(0, 16)
-              .replace("T", " ");
-}
-
-const startDateTime = startRaw ? toUTC(startRaw) : null;
-const endDateTime   = endRaw   ? toUTC(endRaw)   : null;
+    const startDateTime = startRaw || null;
+    const endDateTime   = endRaw || null;
     // Collect options (async because of file reading)
     const options = await collectOptions();
 

@@ -22,6 +22,27 @@ load_dotenv()
 app = Flask(__name__)
 app.config.from_object(Config)
 app.permanent_session_lifetime = timedelta(minutes=30)
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def to_ist(dt):
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(IST)
+
+
+@app.template_filter("format_ist")
+def format_ist(dt, fmt="%d %b %Y, %I:%M %p"):
+    local_dt = to_ist(dt)
+    return local_dt.strftime(fmt) if local_dt else ""
+
+
+@app.template_filter("datetime_local_ist")
+def datetime_local_ist(dt):
+    local_dt = to_ist(dt)
+    return local_dt.strftime("%Y-%m-%dT%H:%M") if local_dt else ""
 
 # ── Uploads folder ────────────────────────────────────────
 UPLOADS_FOLDER = os.path.join(

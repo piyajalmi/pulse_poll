@@ -471,7 +471,7 @@
                 {{ poll.vote_count }}
             </span>
             <span class="rp-cell-muted">
-                {{ poll.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                {{ poll.end_time|format_ist }}
             </span>
             <span>
                 <span class="db-poll-badge

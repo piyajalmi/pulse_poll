@@ -4,3 +4,4 @@ venv/
 __pycache__/
 *.pyc
 database/polls.db
+firebase_credentials.json

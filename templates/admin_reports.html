@@ -103,18 +103,22 @@
                 </select>
             </div>
 
-            <!-- Export PDF button -->
+            <!-- Export buttons -->
             <div class="rp-selector-group
                         rp-selector-action">
                 <label class="rp-selector-label">
                     &nbsp;
                 </label>
-                <button type="button"
-                        class="rp-export-btn"
-                        onclick="exportPDF()">
+                <a class="rp-export-btn"
+                   href="/admin/reports/export?type={{ report_type }}&status={{ filter_status }}&format=pdf">
                     <i class="bi bi-file-pdf-fill me-2"></i>
                     Export PDF
-                </button>
+                </a>
+                <a class="rp-export-btn"
+                   href="/admin/reports/export?type={{ report_type }}&status={{ filter_status }}&format=xlsx">
+                    <i class="bi bi-file-earmark-excel-fill me-2"></i>
+                    Export Excel
+                </a>
             </div>
             {% endif %}
 
@@ -503,23 +507,22 @@
 document.addEventListener("DOMContentLoaded", function() {
     const dateEl = document.getElementById("printDate");
     if (dateEl) {
-        dateEl.textContent = new Date().toLocaleDateString(
+        dateEl.textContent = new Date().toLocaleString(
             'en-IN', {
-                day:   '2-digit',
+                day: '2-digit',
                 month: 'long',
-                year:  'numeric'
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata' 
             }
         );
     }
 });
 
-// ── Export PDF using browser print ───────────────────────
-function exportPDF() {
-    // Add print class to body
-    document.body.classList.add("printing");
-    window.print();
-    // Remove after print dialog closes
-    document.body.classList.remove("printing");
-}
+
+
 </script>
 {% endblock %}

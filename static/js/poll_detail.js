@@ -1,67 +1,117 @@
-// ── Chart instance (kept outside so we can update it) ──
 let pollChart = null;
+let firebaseDB = null;
+let pollingStarted = false;
 
-// ── Run when page loads ────────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
+    applyResults(OPTIONS || []);
 
-    // Only draw chart if there are votes
-    if (OPTIONS.length > 0) {
-        drawChart(OPTIONS);
-    }
-
-    // Only connect WebSocket if poll is still active
     if (!IS_EXPIRED) {
-        initWebSocket();
+        initFirebaseRealtime();
     }
 });
 
-// ── Draw or update the pie chart ───────────────────────
+function initFirebaseRealtime() {
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        firebaseDB = firebase.database();
+        const pollRef = firebaseDB.ref(`polls/${POLL_ID}/results`);
+
+        pollRef.on(
+            "value",
+            function (snapshot) {
+                const data = snapshot.val();
+                if (!data || !Array.isArray(data.results)) return;
+                applyResults(data.results, data.total_votes);
+            },
+            function (error) {
+                console.error("Firebase listener error:", error);
+                startPolling();
+            }
+        );
+    } catch (error) {
+        console.error("Firebase init error:", error);
+        startPolling();
+    }
+}
+
+function startPolling() {
+    if (pollingStarted) return;
+    pollingStarted = true;
+    fetchLatestResults();
+    setInterval(fetchLatestResults, 5000);
+}
+
+async function fetchLatestResults() {
+    try {
+        const response = await fetch(`/api/poll/${POLL_TOKEN}/results`);
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.results)) return;
+        applyResults(data.results, data.total_votes);
+    } catch (error) {
+        console.error("Polling fetch error:", error);
+    }
+}
+
+function applyResults(results, totalVotesOverride = null) {
+    const optionsData = (results || []).map((item) => ({
+        text: item.option,
+        votes: Number(item.votes || 0),
+        percentage: Number(item.percentage || 0),
+    }));
+
+    const totalVotes = totalVotesOverride !== null
+        ? Number(totalVotesOverride || 0)
+        : optionsData.reduce((sum, item) => sum + item.votes, 0);
+
+    updateTotalVotes(totalVotes);
+    updateDetails(optionsData);
+    drawChart(optionsData);
+    toggleEmptyStates(totalVotes);
+}
+
 function drawChart(optionsData) {
+    const canvas = document.getElementById("pollChart");
+    if (!canvas) return;
 
-    const ctx = document.getElementById("pollChart");
-    if (!ctx) return;   // canvas not found (0 votes state)
-
-    // Extract labels and data from options
-    const labels = optionsData.map(o => o.text);
-    const votes  = optionsData.map(o => o.votes);
-    const colors = generateColors(optionsData.length);
+    const labels = optionsData.map((o) => o.text);
+    const votes = optionsData.map((o) => o.votes);
+    const colors = generateColors(optionsData.length || 1);
 
     if (!pollChart) {
-        // ── First time → create chart ──────────────────
-        pollChart = new Chart(ctx, {
+        pollChart = new Chart(canvas, {
             type: "doughnut",
             data: {
                 labels: labels,
                 datasets: [{
-                    data:                 votes,
-                    backgroundColor:      colors.bg,
-                    borderColor:          colors.border,
-                    borderWidth:          2,
-                    hoverOffset:          8,
+                    data: votes,
+                    backgroundColor: colors.bg,
+                    borderColor: colors.border,
+                    borderWidth: 2,
+                    hoverOffset: 8,
                 }]
             },
             options: {
-                responsive:          true,
+                responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         position: "bottom",
                         labels: {
-                            padding:   20,
-                            font:      { size: 13 },
-                            color:     "#1e1b4b",
+                            padding: 20,
+                            font: { size: 13 },
+                            color: "#1e1b4b",
                         }
                     },
                     tooltip: {
                         callbacks: {
-                            // Show % in tooltip
-                            label: function(context) {
-                                const total = context.dataset
-                                    .data.reduce((a, b) => a + b, 0);
+                            label: function (context) {
+                                const total = context.dataset.data
+                                    .reduce((a, b) => a + b, 0);
                                 const pct = total > 0
-                                    ? Math.round(
-                                        context.parsed / total * 100
-                                      )
+                                    ? Math.round(context.parsed / total * 100)
                                     : 0;
                                 return ` ${context.parsed} votes (${pct}%)`;
                             }
@@ -70,106 +120,77 @@ function drawChart(optionsData) {
                 }
             }
         });
-
     } else {
-        // ── Chart exists → just update data ───────────
+        pollChart.data.labels = labels;
         pollChart.data.datasets[0].data = votes;
-        pollChart.update("active");  // smooth animation
+        pollChart.data.datasets[0].backgroundColor = colors.bg;
+        pollChart.data.datasets[0].borderColor = colors.border;
+        pollChart.update("active");
     }
 }
 
-// ── WebSocket for live updates ─────────────────────────
-function initWebSocket() {
+function updateDetails(optionsData) {
+    const rows = document.querySelectorAll(".pd-option-row");
+    rows.forEach(function (row) {
+        const optionTextEl = row.querySelector(".pd-option-text");
+        const statEl = row.querySelector(".pd-option-stat");
+        const barEl = row.querySelector(".pd-progress-fill");
+        if (!optionTextEl || !statEl || !barEl) return;
 
-    const socket = io({
-    transports: ['websocket'],
-    upgrade: false
-});
+        const optionText = optionTextEl.textContent.trim();
+        const match = optionsData.find((o) => o.text === optionText);
+        if (!match) return;
 
-    // When connected → join this poll's room
-    socket.on("connect", function () {
-        socket.emit("join_poll", { poll_id: POLL_ID });
-        console.log("Connected to poll room:", POLL_ID);
-    });
-
-    // When vote comes in → update chart
-    socket.on("vote_update", function (data) {
-        if (String(data.poll_id) === String(POLL_ID)) {
-            console.log("Live vote received!", data);
-            drawChart(data.results);
-            updateDetails(data.results);
-        }
-    });
-
-    socket.on("disconnect", function () {
-        console.log("Disconnected from poll room");
-    });
-
-    // Leave room when user leaves page
-    window.addEventListener("beforeunload", function () {
-        socket.emit("leave_poll", { poll_id: POLL_ID });
+        statEl.textContent = `${match.votes} votes (${match.percentage}%)`;
+        barEl.style.width = `${match.percentage}%`;
     });
 }
 
-// ── Update Details tab progress bars live ─────────────
-function updateDetails(results) {
-    results.forEach(function(result) {
-        // Find option row by matching text
-        const rows = document.querySelectorAll(".pd-option-row");
-        rows.forEach(function(row) {
-            const textEl = row.querySelector(".pd-option-text");
-            if (textEl && textEl.textContent.trim() === result.option) {
-
-                // Update stat text
-                row.querySelector(".pd-option-stat")
-                   .textContent =
-                   `${result.votes} votes (${result.percentage}%)`;
-
-                // Update progress bar width
-                row.querySelector(".pd-progress-fill")
-                   .style.width = `${result.percentage}%`;
-            }
-        });
-    });
+function updateTotalVotes(totalVotes) {
+    const totalVotesEl = document.getElementById("pollTotalVotes");
+    if (!totalVotesEl) return;
+    totalVotesEl.textContent = String(totalVotes);
 }
 
-// ── Generate purple color palette ─────────────────────
+function toggleEmptyStates(totalVotes) {
+    const chartEmptyState = document.getElementById("chartEmptyState");
+    const noVotesHint = document.getElementById("noVotesHint");
+
+    if (chartEmptyState) {
+        chartEmptyState.classList.toggle("d-none", totalVotes > 0);
+    }
+    if (noVotesHint) {
+        noVotesHint.classList.toggle("d-none", totalVotes > 0);
+    }
+}
+
 function generateColors(count) {
     const palette = [
-        { bg: "rgba(79,70,229,0.8)",   border: "#4f46e5" },
-        { bg: "rgba(139,92,246,0.8)",  border: "#8b5cf6" },
-        { bg: "rgba(6,182,212,0.8)",   border: "#06b6d4" },
-        { bg: "rgba(16,185,129,0.8)",  border: "#10b981" },
-        { bg: "rgba(245,158,11,0.8)",  border: "#f59e0b" },
-        { bg: "rgba(239,68,68,0.8)",   border: "#ef4444" },
+        { bg: "rgba(79,70,229,0.8)", border: "#4f46e5" },
+        { bg: "rgba(139,92,246,0.8)", border: "#8b5cf6" },
+        { bg: "rgba(6,182,212,0.8)", border: "#06b6d4" },
+        { bg: "rgba(16,185,129,0.8)", border: "#10b981" },
+        { bg: "rgba(245,158,11,0.8)", border: "#f59e0b" },
+        { bg: "rgba(239,68,68,0.8)", border: "#ef4444" },
     ];
 
-    const bg     = [];
+    const bg = [];
     const border = [];
-
     for (let i = 0; i < count; i++) {
         bg.push(palette[i % palette.length].bg);
         border.push(palette[i % palette.length].border);
     }
-
     return { bg, border };
 }
-// ── Copy share link ────────────────────────────────────
+
 function copyLink() {
     const link = document.getElementById("shareLink").value;
     navigator.clipboard.writeText(link).then(() => {
-        // Change icon to checkmark
-        document.getElementById("copyIcon")
-                .className = "bi bi-check2";
-
-        // Show copied message
+        document.getElementById("copyIcon").className = "bi bi-check2";
         const msg = document.getElementById("copyMsg");
         msg.classList.remove("d-none");
-
-        // Reset after 2 seconds
         setTimeout(() => {
-            document.getElementById("copyIcon")
-                    .className = "bi bi-clipboard";
+            document.getElementById("copyIcon").className = "bi bi-clipboard";
             msg.classList.add("d-none");
         }, 2000);
     });

@@ -16,8 +16,8 @@
 <div class="row g-4 mb-5">
 
     <!-- Active Polls -->
-    <div class="col-lg-4 col-md-6">
-        <a href="/dashboard/my-polls" class="db-stat-link">
+    <div class="col-lg-4 col-md-6 col-12">
+        <a href="javascript:;" class="db-stat-link">
             <div class="db-stat-card db-stat-active">
                 <div class="db-stat-left">
                     <div class="db-stat-icon">
@@ -46,8 +46,8 @@
     </div>
 
     <!-- Total Polls -->
-    <div class="col-lg-4 col-md-6">
-        <a href="/dashboard/my-polls" class="db-stat-link">
+    <div class="col-lg-4 col-md-6 col-12">
+        <a href="javascript:;" class="db-stat-link">
             <div class="db-stat-card db-stat-total">
                 <div class="db-stat-left">
                     <div class="db-stat-icon">
@@ -75,7 +75,7 @@
     </div>
 
     <!-- Total Votes -->
-    <div class="col-lg-4 col-md-6">
+    <div class="col-lg-4 col-md-6 col-12">
         <div class="db-stat-card db-stat-votes">
             <div class="db-stat-left">
                 <div class="db-stat-icon">
@@ -106,7 +106,7 @@
 <!-- ── Recent Polls ────────────────────────────────────── -->
 <div class="db-section-header mb-3">
     <h5 class="db-section-title">Recent Polls</h5>
-    <!-- <a href="/dashboard/my-polls" class="db-section-link">
+    <!-- <a href="javascript:;" class="db-section-link">
         View all →
     </a> -->
 </div>
@@ -114,7 +114,7 @@
 {% if recent_polls %}
 <div class="db-polls-table">
 <div class="db-polls-table-header"
-     style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+     >
     <span>Question</span>
     <span>Created By</span>
     <span>Status</span>
@@ -124,7 +124,7 @@
 
    {% for poll in recent_polls %}
 <div class="db-polls-table-row"
-     style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+     >
 
     <span class="db-poll-question">
         {{ poll.question }}
@@ -165,7 +165,7 @@
         </a>
         <a href="/dashboard/poll/{{ poll.share_token }}"
            class="db-action-btn"
-           title="Vote">
+           title="View">
             <i class="bi bi-eye-fill"></i>
         </a>
     </span>

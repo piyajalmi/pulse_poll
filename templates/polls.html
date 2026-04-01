@@ -72,13 +72,33 @@
                     <!-- Actions -->
                     <div class="pl-card-actions">
                         
-                        {% if poll.status != 'Expired' %}
-                        <a href="/poll/{{ poll.share_token }}"
-                           class="pl-btn-vote">
-                            <i class="bi bi-hand-index-thumb-fill me-1"></i>
-                            Vote
-                        </a>
-                        {% endif %}
+                       {% if poll.status != 'Expired' %}
+
+    {% if is_admin %}
+        <button class="pl-btn-vote"
+                disabled
+                style="opacity:0.6; cursor:not-allowed;">
+            <i class="bi bi-shield-lock-fill me-1"></i>
+            Vote
+        </button>
+
+    {% elif poll.id in voted_poll_ids %}
+        <button class="pl-btn-vote"
+                disabled
+                style="opacity:0.6; cursor:not-allowed;">
+            <i class="bi bi-check-circle-fill me-1"></i>
+            Vote
+        </button>
+
+    {% else %}
+        <a href="/poll/{{ poll.share_token }}"
+           class="pl-btn-vote">
+            <i class="bi bi-hand-index-thumb-fill me-1"></i>
+            Vote
+        </a>
+    {% endif %}
+
+{% endif %}
 
                         <a href="/poll/{{ poll.share_token }}/results"
                            class="pl-btn-results">

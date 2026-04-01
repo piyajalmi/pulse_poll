@@ -4,6 +4,7 @@ let currentPollType = CURRENT_TYPE;
 // ── Option counter ──────────────────────────────────────
 let optionCount = 0;
 
+// const IS_STARTED = "{{ is_started }}" === "True";
 // ── Initialize page with existing options ───────────────
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -59,13 +60,15 @@ function addOption(existingOption = null) {
                    placeholder="Option ${optionCount}"
                    value="${existingOption
                             ? existingOption.text : ''}"
+                            ${IS_STARTED ? 'disabled' : ''}
                    maxlength="200">
+                   ${!IS_STARTED ? `
             <button class="cp-remove-btn"
                     type="button"
                     onclick="removeOption('${rowId}')"
                     title="Remove">
                 <i class="bi bi-x"></i>
-            </button>
+            </button> ` : ''}
         </div>
 
         <div class="cp-option-divider"></div>
@@ -82,9 +85,8 @@ function addOption(existingOption = null) {
 
             <button class="cp-file-btn"
                     type="button"
-                    onclick="document
-                             .getElementById('${fileId}')
-                             .click()">
+                    ${IS_STARTED ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+                    onclick="${IS_STARTED ? '' : `document.getElementById('${fileId}').click()`}">
                 <i class="bi bi-paperclip"></i>
                 ${hasFile ? 'Change file' : 'Attach file'}
             </button>
@@ -210,16 +212,11 @@ async function collectOptions() {
 async function submitEdit() {
     const question = document.getElementById("pollQuestion")
                              .value.trim();
-    const endDate  = document.getElementById("pollEndDate")
-                             .value;
-    const endTime  = document.getElementById("pollEndTime")
-                             .value;
+    const endDateTime = document.getElementById("pollEndDate").value;
     const btn      = document.getElementById("savePollBtn");
     const message  = document.getElementById("formMessage");
 
-    const endDateTime = endDate && endTime
-                        ? `${endDate} ${endTime}`
-                        : null;
+    
 
     // Collect options
     const options = await collectOptions();
@@ -246,7 +243,11 @@ if (uniqueTexts.size !== optionTexts.length) {
         questionError.classList.add("d-none");
     }
 
-    const validOptions = options.filter(o => o.text.length > 0);
+    const validOptions = options.filter(o =>
+    (o.text && o.text.trim().length > 0) ||
+    o.file_data ||
+    (o.media_id !== null && o.media_id !== undefined)
+);
     const optionsError = document.getElementById("optionsError");
     if (validOptions.length < 2) {
         optionsError.classList.remove("d-none");

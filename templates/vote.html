@@ -218,7 +218,8 @@
 </section>
 
 <!-- ── Confirmation Modal ─────────────────────────────── -->
-<div class="modal fade" id="confirmModal" tabindex="-1">
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-modal="true"
+     role="dialog">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content pp-modal">
             <div class="modal-body text-center p-4">
@@ -260,6 +261,7 @@
     const END_TIME = "{{ poll.end_time.isoformat() }}";
     const POLL_TYPE = "{{ poll.poll_type }}";
     const POLL_TOKEN = "{{ poll.share_token }}";
+    
 </script>
 <script src="{{ url_for('static', filename='js/vote.js') }}">
 </script>

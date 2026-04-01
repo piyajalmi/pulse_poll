@@ -1,216 +1,211 @@
-{% extends "dashboard_base.html" %}
-
-{% block title %}Edit Poll — PulsePoll{% endblock %}
-
-{% block content %}
+{% extends "dashboard_base.html" %} {% block title %}Edit Poll — PulsePoll{%
+endblock %} {% block content %}
 
 <!-- ── Breadcrumb ─────────────────────────────────────── -->
 <nav class="db-breadcrumb mb-4">
-    <a href="/dashboard" class="db-breadcrumb-link">
-        <i class="bi bi-grid-1x2-fill me-1"></i>
-        Dashboard
-    </a>
-    <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
-    <a href="/dashboard/polls" class="db-breadcrumb-link">
-        Polls
-    </a>
-    <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
-    <span class="db-breadcrumb-current">
-        Edit Poll #{{ poll.id }}
-    </span>
+  <a href="/dashboard" class="db-breadcrumb-link">
+    <i class="bi bi-grid-1x2-fill me-1"></i>
+    Dashboard
+  </a>
+  <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
+  <a href="/dashboard/polls" class="db-breadcrumb-link"> Polls </a>
+  <i class="bi bi-chevron-right db-breadcrumb-sep"></i>
+  <span class="db-breadcrumb-current"> Edit Poll #{{ poll.id }} </span>
 </nav>
 
 <!-- ── Page Header ────────────────────────────────────── -->
 <div class="db-page-header mb-4">
-    <div>
-        <h4 class="db-page-title">
-            <i class="bi bi-pencil-square me-2"
-               style="color:#4f46e5;"></i>
-            Edit Poll
-        </h4>
-        <p class="db-page-subtitle">
-            {% if vote_count > 0 %}
-            <i class="bi bi-info-circle me-1"
-               style="color:#f59e0b;"></i>
-            {{ vote_count }} vote(s) exist —
-            poll type is locked.
-            {% else %}
-            Update your poll details below.
-            {% endif %}
-        </p>
-    </div>
+  <div>
+    <h4 class="db-page-title">
+      <i class="bi bi-pencil-square me-2" style="color: #4f46e5"></i>
+      Edit Poll
+    </h4>
+  </div>
 </div>
 
 <!-- ── Edit Poll Card ─────────────────────────────────── -->
 <div class="row">
-    <div class="col-12">
-        <div class="pp-card">
+  <div class="col-12">
+    <div class="pp-card">
+      <!-- Poll Question -->
+      <div class="mb-4">
+        <label class="pp-label">Poll Question</label>
+        <input
+          type="text"
+          id="pollQuestion"
+          class="form-control pp-input"
+          value="{{ poll.question }}"
+          {%
+          if
+          is_started
+          %}disabled{%
+          endif
+          %}
+          placeholder="What would you like to ask?"
+          maxlength="200"
+        />
+        <div class="text-danger small mt-1 d-none" id="questionError">
+          Please enter a poll question.
+        </div>
+        {% if is_started %}
+        <small class="text-warning mt-1 d-block">
+          <i class="bi bi-lock-fill me-1"></i>
+          Cannot edit question after poll has started.
+        </small>
+        {% endif %}
+      </div>
 
-            <!-- Poll Question -->
-            <div class="mb-4">
-                <label class="pp-label">Poll Question</label>
-                <input type="text"
-                       id="pollQuestion"
-                       class="form-control pp-input"
-                       value="{{ poll.question }}"
-                       placeholder="What would you like to ask?"
-                       maxlength="200">
-                <div class="text-danger small mt-1 d-none"
-                     id="questionError">
-                    Please enter a poll question.
-                </div>
+      <!-- Poll Type -->
+      <div class="mb-4">
+        <label class="pp-label">
+          Poll Type {% if vote_count > 0 %}
+          <span class="ep-locked-badge">
+            <i class="bi bi-lock-fill me-1"></i>
+            Locked (poll has started)
+          </span>
+          {% endif %}
+        </label>
+
+        <div class="cp-type-row">
+          <label class="cp-type-option" id="typeSingle" {% if vote_count > 0 or is_started %}style="pointer-events:none; opacity:0.6;"{% endif %}>
+            <input
+              type="radio"
+              name="pollType"
+              value="single"
+              {% if poll.poll_type == "single" %}checked{% endif %}
+              {% if vote_count > 0 or is_started %}disabled{% endif %}
+              onchange="setPollType('single')"
+            >
+            <div class="cp-type-card">
+              <i class="bi bi-record-circle"></i>
+              <span class="cp-type-title"> Single Choice </span>
+              <span class="cp-type-desc"> Voters pick one option </span>
             </div>
+          </label>
 
-            <!-- Poll Type -->
-            <div class="mb-4">
+          <label class="cp-type-option" id="typeMultiple" {% if vote_count > 0 or is_started %}style="pointer-events:none; opacity:0.6;"{% endif %}>
+            <input
+              type="radio"
+              name="pollType"
+              value="multiple"
+              {% if poll.poll_type == "multiple" %}checked{% endif %}
+              {% if vote_count > 0 or is_started %}disabled{% endif %}
+              onchange="setPollType('multiple')"
+            >
+            <div class="cp-type-card">
+              <i class="bi bi-check2-square"></i>
+              <span class="cp-type-title"> Multiple Choice </span>
+              <span class="cp-type-desc"> Voters pick many options </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <label class="pp-label mb-0">Options</label>
+          {% if not is_started %}
+          <button
+            class="btn btn-pp-add-option"
+            type="button"
+            onclick="addOption()"
+          >
+            <i class="bi bi-plus-circle me-1"></i>
+            Add Option
+          </button>
+          {% endif %}
+        </div>
+        {% if is_started %}
+        <div class="alert alert-warning py-2 mb-2" style="font-size: 0.85rem">
+          <i class="bi bi-lock-fill me-1"></i>
+          Options cannot be edited after poll has started.
+        </div>
+        {% endif %}
+
+        <div id="optionsContainer"></div>
+
+        <div class="text-danger small mt-1 d-none" id="optionsError">
+          Please add at least 2 options.
+        </div>
+      </div>
+        <div class="row col-12">
+            <div class="mb-4 col-6 row d-flex">
                 <label class="pp-label">
-                    Poll Type
-                    {% if vote_count > 0 %}
+                    Poll Start Date & Time
+                    {% if is_started %}
                     <span class="ep-locked-badge">
                         <i class="bi bi-lock-fill me-1"></i>
-                        Locked (votes exist)
+                        Locked
                     </span>
                     {% endif %}
                 </label>
-
-                <div class="cp-type-row">
-
-                    <label class="cp-type-option"
-                           id="typeSingle"
-                           {% if vote_count > 0 %}
-                           style="pointer-events:none;
-                                  opacity:0.6;"
-                           {% endif %}>
-                        <input type="radio"
-                               name="pollType"
-                               value="single"
-                               {% if poll.poll_type == 'single' %}
-                               checked
-                               {% endif %}
-                               {% if vote_count > 0 %}
-                               disabled
-                               {% endif %}
-                               onchange="setPollType('single')">
-                        <div class="cp-type-card">
-                            <i class="bi bi-record-circle"></i>
-                            <span class="cp-type-title">
-                                Single Choice
-                            </span>
-                            <span class="cp-type-desc">
-                                Voters pick one option
-                            </span>
-                        </div>
-                    </label>
-
-                    <label class="cp-type-option"
-                           id="typeMultiple"
-                           {% if vote_count > 0 %}
-                           style="pointer-events:none;
-                                  opacity:0.6;"
-                           {% endif %}>
-                        <input type="radio"
-                               name="pollType"
-                               value="multiple"
-                               {% if poll.poll_type == 'multiple' %}
-                               checked
-                               {% endif %}
-                               {% if vote_count > 0 %}
-                               disabled
-                               {% endif %}
-                               onchange="setPollType('multiple')">
-                        <div class="cp-type-card">
-                            <i class="bi bi-check2-square"></i>
-                            <span class="cp-type-title">
-                                Multiple Choice
-                            </span>
-                            <span class="cp-type-desc">
-                                Voters pick many options
-                            </span>
-                        </div>
-                    </label>
-
-                </div>
+                <input type="datetime-local" id="pollStartDate" class="form-control pp-input"
+                    value="{{ poll.start_time.strftime('%Y-%m-%dT%H:%M') }}" 
+                    {% if is_started %}disabled{% endif %} />
+                    {% if is_started %}
+                        <small class="text-warning mt-1 d-block">
+                        <i class="bi bi-lock-fill me-1"></i>
+                        Cannot edit time after poll has started.
+                        </small>
+                    {% endif %}
             </div>
 
-            <!-- Options -->
-            <div class="mb-4">
-                <div class="d-flex align-items-center
-                            justify-content-between mb-2">
-                    <label class="pp-label mb-0">Options</label>
-                    <button class="btn btn-pp-add-option"
-                            type="button"
-                            onclick="addOption()">
-                        <i class="bi bi-plus-circle me-1"></i>
-                        Add Option
-                    </button>
-                </div>
-
-                <div id="optionsContainer"></div>
-
-                <div class="text-danger small mt-1 d-none"
-                     id="optionsError">
-                    Please add at least 2 options.
-                </div>
-            </div>
-
-            <!-- End Date & Time -->
-            <div class="mb-4">
-                <label class="pp-label">
-                    Poll End Date & Time
-                </label>
+            <!-- Poll End Date & Time -->
+            <div class="mb-4 col-6">
+                <label class="pp-label"> Poll End Date & Time </label>
                 <div class="row g-2">
                     <div class="col-7">
-                        <input type="date"
-                               id="pollEndDate"
-                               class="form-control pp-input"
-                               value="{{ poll.end_time.strftime('%Y-%m-%d') }}">
-                    </div>
-                    <div class="col-5">
-                        <input type="time"
-                               id="pollEndTime"
-                               class="form-control pp-input"
-                               value="{{ poll.end_time.strftime('%H:%M') }}">
+                        <input
+                        type="datetime-local"
+                        id="pollEndDate"
+                        class="form-control pp-input"
+                        value="{{ poll.end_time.strftime('%Y-%m-%dT%H:%M') }}"
+                        />
                     </div>
                 </div>
-                <div class="text-danger small mt-1 d-none"
-                     id="timeError">
+                <div class="text-danger small mt-1 d-none" id="timeError">
                     Please select a future end date and time.
                 </div>
             </div>
-
-            <!-- Save Button -->
-             <div class="col-12 justify-content-center d-flex">
-                 <button class="btn btn-pp-secondary mt-2"
-                    type="button"
-                    onclick="window.location.href='/dashboard/polls'">
-                cancel
-            </button>
-            <button class="btn btn-pp-primary  mt-2"
-                    type="button"
-                    id="savePollBtn"
-                    onclick="submitEdit()">
-                <i class="bi bi-check-circle me-2"></i>
-                Save Changes
-            </button>
-            </div>
-
-            <div id="formMessage" class="mt-3 d-none"></div>
-
         </div>
+
+
+      <!-- Save Button -->
+        <div class="col-12 justify-content-center d-flex">
+            <button
+            class="btn btn-pp-secondary mt-2"
+            type="button"
+            onclick="window.location.href = '/dashboard/polls'"
+            >
+            cancel
+            </button>
+            <button
+            class="btn btn-pp-primary mt-2"
+            type="button"
+            id="savePollBtn"
+            onclick="submitEdit()"
+            >
+            <i class="bi bi-check-circle me-2"></i>
+            Save Changes
+            </button>
+        </div>
+
+        <div id="formMessage" class="mt-3 d-none"></div>
     </div>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-    // Pass existing data to JS
-    const POLL_ID      = {{ poll.id }};
-    const POLL_TOKEN = "{{ poll.share_token }}";
-    const VOTE_COUNT   = {{ vote_count }};
-    const EXISTING_OPTIONS = {{ options_data | tojson }};
-    const CURRENT_TYPE = "{{ poll.poll_type }}";
+      // Pass existing data to JS
+      const POLL_ID      = {{ poll.id }};
+      const POLL_TOKEN = "{{ poll.share_token }}";
+      const VOTE_COUNT   = {{ vote_count }};
+      const EXISTING_OPTIONS = {{ options_data | tojson }};
+      const CURRENT_TYPE = "{{ poll.poll_type }}";
+
+  const IS_STARTED = {{ is_started | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/edit_poll.js') }}">
-</script>
+<script src="{{ url_for('static', filename='js/edit_poll.js') }}"></script>
 {% endblock %}

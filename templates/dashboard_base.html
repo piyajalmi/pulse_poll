@@ -42,7 +42,17 @@
 
     <!-- ── Navbar ────────────────────────────────── -->
     <nav class="db-navbar">
+        
         <div class="db-navbar-left">
+
+    <!-- MOBILE MENU BUTTON -->
+    <button class="db-menu-btn d-md-none me-2"
+            onclick="toggleMobileSidebar()">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- <i class="bi bi-bar-chart-line-fill"
+       style="color:#a5b4fc; font-size:1.3rem;"></i> -->
             <i class="bi bi-bar-chart-line-fill"
                style="color:#a5b4fc; font-size:1.3rem;"></i>
             <span class="db-brand">
@@ -50,12 +60,13 @@
                 <span class="db-brand-poll">Poll</span>
             </span>
         </div>
+        
         <div class="db-navbar-right">
         {% set user_role=session.get('role') %}
               {% if user_role == 'admin' %}
-              <a  type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
+              <a href="" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
                 {% else %}
-              <a  type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">USER</a>
+              <a href="/" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">USER</a>
                 {% endif %}
         
         <!-- <div class="db-navbar-right">
@@ -168,6 +179,12 @@
                 .classList.remove("sidebar-pre-collapsed");
     });
     </script>
+    <script>
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById("dbSidebar");
+    sidebar.classList.toggle("mobile-active");
+}
+</script>
 
 </body>
 </html>

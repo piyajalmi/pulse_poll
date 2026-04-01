@@ -4,7 +4,9 @@
 
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -41,6 +43,7 @@
                     <i class="bi bi-circle-fill ms-2
                                pp-live-dot"></i>
                     Live
+                </div>
                 {% endif %}
                 {% endif %}
 
@@ -213,6 +216,16 @@
     const POLL_TOKEN   = "{{ poll.share_token }}";
     const IS_EXPIRED = "{{ is_expired }}" === "True";
     const SHOW_RESULTS = "{{ show_results }}" === "True";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyCNuWmSEY_6taf_Oe2S0Dvrqe_1c7DuUrc",
+  authDomain: "pulsepoll-e4314.firebaseapp.com",
+  databaseURL: "https://pulsepoll-e4314-default-rtdb.firebaseio.com",
+  projectId: "pulsepoll-e4314",
+  storageBucket: "pulsepoll-e4314.firebasestorage.app",
+  messagingSenderId: "274108587982",
+  appId: "1:274108587982:web:9f7f32c6677dca6355159f"
+};
 </script>
 <script src="{{ url_for('static',
               filename='js/results.js') }}">

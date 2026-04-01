@@ -277,6 +277,12 @@ function closeEditModal() {
             .classList.add("d-none");
 }
 
+const overlay = document.getElementById("editModalOverlay");
+if (overlay) {
+    overlay.addEventListener("click", function(e) {
+        if (e.target === this) closeEditModal();
+    });
+}
 // ── Save user changes ────────────────────────────────────
 async function saveUser() {
     const userId    = document.getElementById("editUserId")
@@ -433,10 +439,10 @@ function updateBanButton(userId, newStatus) {
     }
 }
 
-// ── Close modal on overlay click ─────────────────────────
-document.getElementById("editModalOverlay")
-        .addEventListener("click", function(e) {
-    if (e.target === this) closeEditModal();
-});
+// // ── Close modal on overlay click ─────────────────────────
+// document.getElementById("editModalOverlay")
+//         .addEventListener("click", function(e) {
+//     if (e.target === this) closeEditModal();
+// });
 </script>
 {% endblock %}

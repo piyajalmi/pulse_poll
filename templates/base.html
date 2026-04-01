@@ -23,69 +23,60 @@
 <body>
     {% if not hide_navbar %}
     <!-- ── Navbar ─────────────────────────────────────── -->
-    <nav class="navbar navbar-expand-lg pp-navbar">
-        <div class="container">
+    <nav class="navbar navbar-expand-lg pp-navbar navbar-dark"> <!-- added navbar-dark for better icon visibility -->
+  <div class="container">
+    <!-- Brand (Visible on all screens) -->
+    <a class="navbar-brand pp-brand" href="/">
+      <i class="bi bi-bar-chart-line-fill me-2" style="color:#a5b4fc;"></i>
+      <span class="pulse">Pulse</span><span class="poll">Poll</span>
+    </a>
 
-            <!-- Brand -->
-            <a class="navbar-brand pp-brand" href="/">
-                <i class="bi bi-bar-chart-line-fill me-2"
-                   style="color:#a5b4fc;"></i>
-                <span class="pulse">Pulse</span><span class="poll">Poll</span>
-            </a>
+    <!-- Toggler Button (Target matches the ID below) -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ppNavbar" aria-controls="ppNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-            <!-- This div pushes everything inside it to the RIGHT -->
+    <!-- Collapsible Wrapper -->
     <div class="collapse navbar-collapse" id="ppNavbar">
-      <div class="ms-auto d-flex align-items-center gap-4">
+      <!-- Left/Center Links -->
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+        <li class="nav-item"><a class="nav-link text-white" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/polls">Polls</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="/faqs">FAQs</a></li>
         
-        <!-- Navigation Links -->
-        <div class="navbar-nav d-flex align-items-center gap-3">
-          <a class="nav-link text-white px-2" href="/">Home</a>
-          <a class="nav-link text-white px-2" href="/polls">Polls</a>
-          <a class="nav-link text-white px-2" href="/faqs">FAQs</a>
-        </div>
+        <!-- Divider: Hidden on mobile, visible on desktop -->
+        <li class="nav-item d-none d-lg-block">
+          <div class="vr mx-2" style="background-color: white; height: 25px; opacity: 0.3;"></div>
+        </li>
 
-        <!-- Vertical Divider (Optional, looks nice) -->
-        <div class="vr d-none d-lg-block" style="background-color: white; height: 40px; opacity: 0.3;"></div>
-
-            <!-- Right side nav items -->
-            <div class="d-flex align-items-center gap-3">
-            
+        <!-- User Actions (Login/Signup or Profile) -->
+        <li class="nav-item d-flex align-items-center gap-3">
           {% if session.get('user_name') %}
-          {% set user_role=session.get('role') %}
-              {% if user_role == 'admin' %}
-              <a href="/admin/dashboard" type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
-                {% else %}
-              <a href="/dashboard" type="button" class="btn btn-secondary btn-sm border border-0" style="color:#c7d2fe;">ADMIN</a>
-                {% endif %}
-                <div class="dropdown">
-            <a href="#" class="btn btn-sm border border-0 dropdown-toggle" 
-       style="color:#c7d2fe;" role="button" id="userDropdown" 
-       data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-person-circle me-1"></i> {{ session['user_name'] }}
-            </a>
-            
-             <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                <li>
-            <a  class="dropdown-item"href="/logout" style="color:#000; font-size:0.9rem; text-decoration:none; font-weight:500;">
-              <i class="bi bi-box-arrow-right me-1"></i> Logout
-            </a>
-            </li>
-        </ul>
-        </div>
-          {% else %} 
-            <a href="/login" style="color:#c7d2fe; font-size:0.9rem; text-decoration:none; font-weight:500;">
+            {% if session.get('role') == 'admin' %}
+              <a href="/admin/dashboard" class="btn btn-secondary btn-sm border-0" style="color:#c7d2fe;">ADMIN</a>
+            {% else %}
+              <a href="/dashboard" class="btn btn-secondary btn-sm border-0" style="color:#c7d2fe;">ADMIN</a>
+            {% endif %}
+
+            <div class="dropdown">
+              <a href="#" class="btn btn-sm border-0 dropdown-toggle text-white" role="button" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle me-1"></i> {{ session['user_name'] }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right me-1"></i> Logout</a></li>
+              </ul>
+            </div>
+          {% else %}
+            <a href="/login" class="text-white text-decoration-none small">
               <i class="bi bi-box-arrow-in-right me-1"></i> Login
             </a>
-            <a href="/signup" class="btn btn-pp-primary btn-sm">
-              <i class="bi bi-person-plus me-1"></i> Sign Up
-            </a>
+            <a href="/signup" class="btn btn-primary btn-sm">Sign Up</a>
           {% endif %}
-            </div>
-
-        </div>
-        </div>
-        </div>
-    </nav>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
     {% endif %}
     <!-- ── Page Content ───────────────────────────────── -->
     <main>
@@ -99,7 +90,7 @@
         <div class="row g-4">
 
             <!-- Brand Column -->
-            <div class="col-4">
+            <div class="col-12 col-md-4">
                 <div class="pf-brand">
                     <i class="bi bi-bar-chart-line-fill me-2"
                        style="color:#a5b4fc;"></i>
@@ -112,7 +103,7 @@
             </div>
 
             <!-- Quick Links -->
-            <div class="col-4">
+            <div class="col-12 col-md-4">
                 <h6 class="pf-col-title">Quick Links</h6>
                 <ul class="pf-links">
                     <li>

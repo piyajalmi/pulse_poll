@@ -61,7 +61,7 @@
                         </span>
                         <span class="pl-meta-item">
                             <i class="bi bi-clock me-1"></i>
-                            {{ poll.end_time.strftime('%d %b %Y, %I:%M %p') }}
+                            {{ poll.end_time|format_ist }}
                         </span>
                         <span class="pl-meta-item">
                             <i class="bi bi-hand-index-thumb me-1"></i>

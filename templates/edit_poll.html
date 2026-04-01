@@ -141,7 +141,7 @@ endblock %} {% block content %}
                     {% endif %}
                 </label>
                 <input type="datetime-local" id="pollStartDate" class="form-control pp-input"
-                    value="{{ poll.start_time.strftime('%Y-%m-%dT%H:%M') }}" 
+                    value="{{ poll.start_time|datetime_local_ist }}" 
                     {% if is_started %}disabled{% endif %} />
                     {% if is_started %}
                         <small class="text-warning mt-1 d-block">
@@ -160,7 +160,7 @@ endblock %} {% block content %}
                         type="datetime-local"
                         id="pollEndDate"
                         class="form-control pp-input"
-                        value="{{ poll.end_time.strftime('%Y-%m-%dT%H:%M') }}"
+                        value="{{ poll.end_time|datetime_local_ist }}"
                         />
                     </div>
                 </div>

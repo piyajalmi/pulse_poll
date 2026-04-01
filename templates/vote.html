@@ -41,7 +41,7 @@
     </p>
     <div class="pp-timer mb-4">
         <i class="bi bi-clock me-1"></i>
-        {{ poll.start_time.strftime('%d %b %Y, %I:%M %p') }}
+        {{ poll.start_time|format_ist }}
     </div>
     <p class="text-muted small">
         Come back when the poll starts to cast your vote.

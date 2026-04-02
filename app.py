@@ -806,7 +806,7 @@ def add_user():
 def admin_dashboard():
     conn        = get_db_connection()
     cursor      = conn.cursor()
-    filter_user = request.args.get('user_id', None)
+    filter_user = request.args.get('user_id', '').strip() 
 
     cursor.execute("""
         SELECT COUNT(*) as count FROM users
@@ -937,16 +937,16 @@ def admin_polls():
     per_page = 10
     offset   = (page - 1) * per_page
 
-    filter_user   = request.args.get('user_id', '')
-    filter_status = request.args.get('status', '')
-    filter_date   = request.args.get('date', '')
+    filter_user   = request.args.get('user_id', '').strip()
+    filter_status = request.args.get('status', '').strip()
+    filter_date   = request.args.get('date', '').strip()
 
     where_clauses = ["p.status = 1"]
     params        = []
 
-    if filter_user:
+    if filter_user and str(filter_user).strip():
         where_clauses.append("p.user_id = %s")
-        params.append(filter_user)
+        params.append(int(filter_user.strip()))
 
     if filter_status == 'active':
         where_clauses.append(

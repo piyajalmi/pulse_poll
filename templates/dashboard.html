@@ -112,8 +112,10 @@
 </div>
 
 {% if recent_polls %}
+<div class="admin-table-scroll-wrapper">
 <div class="db-polls-table">
 <div class="db-polls-table-header"
+style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; min-width: 600px;"
      >
     <span>Question</span>
     <span>Created By</span>
@@ -124,7 +126,7 @@
 
    {% for poll in recent_polls %}
 <div class="db-polls-table-row"
-     >
+     style=" grid-template-columns: 2fr 1fr 1fr 1fr 1fr;min-width: 600px;">
 
     <span class="db-poll-question">
         {{ poll.question }}
@@ -173,6 +175,7 @@
 </div>
 {% endfor %}
 
+</div>
 </div>
 
 {% else %}

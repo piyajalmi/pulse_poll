@@ -182,9 +182,15 @@
     <script>
 function toggleMobileSidebar() {
     const sidebar = document.getElementById("dbSidebar");
+    const overlay = document.getElementById("sidebarOverlay");
     sidebar.classList.toggle("mobile-active");
+    if (overlay) overlay.classList.toggle("active");
 }
 </script>
 
+<div class="db-sidebar-overlay"
+     id="sidebarOverlay"
+     onclick="toggleMobileSidebar()">
+</div>
 </body>
 </html>

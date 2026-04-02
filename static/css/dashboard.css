@@ -2278,38 +2278,14 @@
     grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
     align-items: center;
 }
-@media (max-width: 768px) {
+.db-polls-table-header {
+    display: grid !important;
+    min-width: 580px;
+}
 
-    .db-polls-table-header {
-        display: none;
-    }
-
-    .db-polls-table-row {
-        display: block !important;
-        padding: 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        margin-bottom: 12px;
-        background: white;
-    }
-
-    .db-polls-table-row span {
-        display: block;
-        margin-bottom: 4px;
-        font-size: 0.85rem;
-    }
-
-    .db-poll-question {
-        font-weight: 600;
-        font-size: 0.95rem;
-        margin-bottom: 6px;
-    }
-
-    .db-poll-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 6px;
-    }
+.db-polls-table-row {
+    display: grid !important;
+    min-width: 580px;
 }
 
 @media (max-width: 768px) {
@@ -2528,4 +2504,54 @@
     min-width: 750px;  /* forces scroll to activate */
     background: #ffffff;
     border-radius: 12px;
+}
+/* ADD at the bottom of your clean @media block: */
+@media (max-width: 768px) {
+
+    /* Stat cards — make them full width and readable */
+    .db-stat-card {
+        padding: 16px !important;
+        gap: 12px;
+    }
+
+    .db-stat-number {
+        font-size: 1.6rem !important;
+    }
+
+    .db-stat-label {
+        font-size: 0.78rem !important;
+    }
+
+    .db-progress-circle {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    .db-progress-circle svg {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    /* Navbar */
+    .db-navbar {
+        padding: 0 12px !important;
+    }
+
+    .db-navbar-right {
+        gap: 4px !important;
+    }
+
+    .db-brand {
+        font-size: 1.1rem !important;
+    }
+
+    .admin-navbar-badge {
+        display: none !important; /* hide on mobile */
+    }
+
+    /* Username — show initials only */
+    .db-navbar-right .btn {
+        font-size: 0.78rem !important;
+        padding: 4px 6px !important;
+    }
 }

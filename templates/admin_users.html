@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %}
+﻿{% extends "admin_base.html" %}
 
 {% block title %}Users — Admin PulsePoll{% endblock %}
 
@@ -17,126 +17,130 @@
             's' if users|length != 1 }}
         </p>
     </div>
+    <button class="btn btn-pp-primary btn-sm"
+            onclick="openAddModal()">
+        <i class="bi bi-person-plus-fill me-2"></i>
+        Add User
+    </button>
 </div>
 
 <!-- ── Users Table ────────────────────────────────────── -->
 {% if users %}
 <div class="admin-table-scroll-wrapper">
-<div class="db-polls-table">
+<table id="usersTable" class="table table-striped">
 
-    <!-- Header -->
-    <div class="au-table-header">
-        <span>#</span>
-        <span>Name</span>
-        <span>Email</span>
-        <span>Polls</span>
-        <span>Joined</span>
-        <span>Status</span>
-        <span>Actions</span>
-    </div>
 
-    <!-- Rows -->
+<thead>
+    <tr>
+        <th>SR.no</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Polls</th>
+        <th>Joined</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+
+<tbody>
     {% for user in users %}
-    <div class="au-table-row" id="userRow{{ user.id }}">
+    <tr id="userRow{{ user.id }}">
 
         <!-- Index -->
-        <span class="au-user-index">
-            {{ loop.index }}
-        </span>
+        <td>{{ loop.index }}</td>
 
         <!-- Name -->
-        <span class="au-user-name">
-            <div class="au-avatar">
-                {{ user.first_name[0] }}{{ user.last_name[0] }}
-            </div>
-            <div>
+        <td>
+            <div class="d-flex align-items-center gap-2">
+                <div class="au-avatar">
+                    {{ user.first_name[0] }}{{ user.last_name[0] }}
+                </div>
                 <div class="au-full-name">
                     {{ user.first_name }} {{ user.last_name }}
                 </div>
             </div>
-        </span>
+        </td>
 
         <!-- Email -->
-        <span class="au-user-email">
+        <td class="au-user-email">
             {{ user.email }}
-        </span>
+        </td>
 
         <!-- Poll count -->
-        <span class="au-user-polls">
+        <td>
             <i class="bi bi-bar-chart me-1"></i>
             {{ user.poll_count }}
-        </span>
+        </td>
 
         <!-- Joined -->
-        <span class="au-user-joined">
+        <td>
             {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}
-        </span>
+        </td>
 
         <!-- Status -->
-        <span>
+        <td>
             <span class="au-status-badge
                 {% if user.status == 1 %}
-                au-status-active
+                    au-status-active
                 {% else %}
-                au-status-banned
+                    au-status-banned
                 {% endif %}"
                 id="statusBadge{{ user.id }}">
                 {% if user.status == 1 %}
-                <i class="bi bi-circle-fill me-1"
-                   style="font-size:0.4rem;"></i>
-                Active
+                    <i class="bi bi-circle-fill me-1"
+                       style="font-size:0.4rem;"></i>
+                    Active
                 {% else %}
-                <i class="bi bi-circle-fill me-1"
-                   style="font-size:0.4rem;"></i>
-                Banned
+                    <i class="bi bi-circle-fill me-1"
+                       style="font-size:0.4rem;"></i>
+                    Banned
                 {% endif %}
             </span>
-        </span>
+        </td>
 
         <!-- Actions -->
-        <span class="db-poll-actions">
+        <td>
+            <div class="db-poll-actions">
 
-            <!-- Edit button -->
-            <button class="db-action-btn"
-                    title="Edit User"
-                    onclick="openEditModal(
-                        {{ user.id }},
-                        '{{ user.first_name }}',
-                        '{{ user.last_name }}',
-                        '{{ user.email }}',
-                        {{ user.status }}
-                    )">
-                <i class="bi bi-pencil-fill"></i>
-            </button>
+                <button class="db-action-btn"
+                        onclick="openEditModal(
+                            {{ user.id }},
+                            '{{ user.first_name }}',
+                            '{{ user.last_name }}',
+                            '{{ user.email }}',
+                            {{ user.status }}
+                        )">
+                    <i class="bi bi-pencil-fill"></i>
+                </button>
 
-            <!-- Ban/Unban button -->
-            <button class="db-action-btn
-                {% if user.status == 1 %}
-                au-btn-ban
-                {% else %}
-                au-btn-unban
-                {% endif %}"
-                    title="{% if user.status == 1 %}
-                           Ban User
-                           {% else %}Unban User{% endif %}"
+                <button class="db-action-btn
+                    {% if user.status == 1 %}
+                        au-btn-ban
+                    {% else %}
+                        au-btn-unban
+                    {% endif %}"
                     id="banBtn{{ user.id }}"
                     onclick="toggleBan(
                         {{ user.id }},
                         {{ user.status }}
                     )">
-                {% if user.status == 1 %}
-                <i class="bi bi-slash-circle-fill"></i>
-                {% else %}
-                <i class="bi bi-check-circle-fill"></i>
-                {% endif %}
-            </button>
+                    {% if user.status == 1 %}
+                        <i class="bi bi-slash-circle-fill"></i>
+                    {% else %}
+                        <i class="bi bi-check-circle-fill"></i>
+                    {% endif %}
+                </button>
 
-        </span>
+            </div>
+        </td>
 
-    </div>
+    </tr>
     {% endfor %}
+</tbody>
 
-</div>
+
+</table>
+
 </div>
 
 {% else %}
@@ -252,11 +256,206 @@
 
     </div>
 </div>
+<!-- ── Add User Modal ─────────────────────────────────── -->
+<div class="au-modal-overlay d-none"
+     id="addModalOverlay">
+    <div class="au-modal">
 
+        <div class="au-modal-header">
+            <h5 class="au-modal-title">
+                <i class="bi bi-person-plus me-2"></i>
+                Add New User
+            </h5>
+            <button class="au-modal-close"
+                    onclick="closeAddModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="au-modal-body">
+
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <label class="au-modal-label">
+                        First Name
+                    </label>
+                    <input type="text"
+                           id="addFirstName"
+                           class="form-control pp-input"
+                           placeholder="First name">
+                </div>
+                <div class="col-6">
+                    <label class="au-modal-label">
+                        Last Name
+                    </label>
+                    <input type="text"
+                           id="addLastName"
+                           class="form-control pp-input"
+                           placeholder="Last name">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="au-modal-label">
+                    Email Address
+                </label>
+                <input type="email"
+                       id="addEmail"
+                       class="form-control pp-input"
+                       placeholder="email@example.com">
+            </div>
+
+            <div class="mb-3">
+                <label class="au-modal-label">
+                    Password
+                </label>
+                <input type="password"
+                       id="addPassword"
+                       class="form-control pp-input"
+                       placeholder="Enter password">
+            </div>
+
+            <div class="mb-3">
+                <label class="au-modal-label">
+                    Account Status
+                </label>
+                <select id="addStatus"
+                        class="form-control pp-input">
+                    <option value="1">Active</option>
+                    <option value="0">Banned</option>
+                </select>
+            </div>
+
+            <div id="addError"
+                 class="text-danger small d-none mb-2">
+            </div>
+
+        </div>
+
+        <div class="au-modal-footer">
+            <button class="au-btn-cancel"
+                    onclick="closeAddModal()">
+                Cancel
+            </button>
+            <button class="au-btn-save"
+                    id="addUserBtn"
+                    onclick="addUser()">
+                <i class="bi bi-person-plus me-1"></i>
+                Add User
+            </button>
+        </div>
+
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+
+function openAddModal() {
+    // Clear all fields
+    document.getElementById("addFirstName").value = "";
+    document.getElementById("addLastName").value  = "";
+    document.getElementById("addEmail").value     = "";
+    document.getElementById("addPassword").value  = "";
+    document.getElementById("addStatus").value    = "1";
+    document.getElementById("addError")
+            .classList.add("d-none");
+
+    document.getElementById("addModalOverlay")
+            .classList.remove("d-none");
+}
+
+function closeAddModal() {
+    document.getElementById("addModalOverlay")
+            .classList.add("d-none");
+}
+
+// Close on overlay click
+const addOverlay = document.getElementById("addModalOverlay");
+if (addOverlay) {
+    addOverlay.addEventListener("click", function(e) {
+        if (e.target === this) closeAddModal();
+    });
+}
+
+async function addUser() {
+    const firstName = document.getElementById("addFirstName")
+                              .value.trim();
+    const lastName  = document.getElementById("addLastName")
+                              .value.trim();
+    const email     = document.getElementById("addEmail")
+                              .value.trim();
+    const password  = document.getElementById("addPassword")
+                              .value.trim();
+    const status    = parseInt(
+                          document.getElementById("addStatus")
+                                  .value
+                      );
+    const btn      = document.getElementById("addUserBtn");
+    const errorDiv = document.getElementById("addError");
+
+    // Validate
+    if (!firstName || !lastName || !email || !password) {
+        errorDiv.textContent = "All fields are required.";
+        errorDiv.classList.remove("d-none");
+        return;
+    }
+
+    // Basic email validation
+    if (!email.includes('@')) {
+        errorDiv.textContent = "Enter a valid email.";
+        errorDiv.classList.remove("d-none");
+        return;
+    }
+
+    // Password length check
+    if (password.length < 6) {
+        errorDiv.textContent =
+            "Password must be at least 6 characters.";
+        errorDiv.classList.remove("d-none");
+        return;
+    }
+
+    btn.disabled  = true;
+    btn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-1">
+        </span>Adding...`;
+
+    try {
+        const response = await fetch('/admin/users/add', {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                first_name: firstName,
+                last_name:  lastName,
+                email:      email,
+                password:   password,
+                status:     status
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            closeAddModal();
+            // Reload page to show new user in table
+            location.reload();
+        } else {
+            errorDiv.textContent = data.error;
+            errorDiv.classList.remove("d-none");
+        }
+
+    } catch (error) {
+        errorDiv.textContent = "Network error. Try again.";
+        errorDiv.classList.remove("d-none");
+    }
+
+    btn.disabled  = false;
+    btn.innerHTML = `
+        <i class="bi bi-person-plus me-1"></i>
+        Add User`;
+}
 // ── Open edit modal ──────────────────────────────────────
 function openEditModal(id, firstName, lastName,
                        email, status) {
@@ -441,10 +640,17 @@ function updateBanButton(userId, newStatus) {
     }
 }
 
-// // ── Close modal on overlay click ─────────────────────────
-// document.getElementById("editModalOverlay")
-//         .addEventListener("click", function(e) {
-//     if (e.target === this) closeEditModal();
-// });
+
+$(document).ready(function () {
+    if (!$.fn.DataTable.isDataTable('#usersTable')) {
+        $('#usersTable').DataTable({
+            pageLength: 5,
+            ordering: true,
+            searching: true,
+            lengthChange: false
+        });
+    }
+});
+
 </script>
 {% endblock %}

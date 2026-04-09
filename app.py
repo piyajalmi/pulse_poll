@@ -44,6 +44,11 @@ def datetime_local_ist(dt):
     local_dt = to_ist(dt)
     return local_dt.strftime("%Y-%m-%dT%H:%M") if local_dt else ""
 
+
+def format_ist_export(dt, fmt="%d %b %Y, %I:%M %p", default="-"):
+    local_dt = to_ist(dt)
+    return local_dt.strftime(fmt) if local_dt else default
+
 # ── Uploads folder ────────────────────────────────────────
 UPLOADS_FOLDER = os.path.join(
     os.path.dirname(__file__),
@@ -132,6 +137,7 @@ def dashboard():
             p.id,
             p.question,
             p.end_time,
+            p.start_time,
             p.share_token,
             p.user_id,
             COUNT(v.id) as vote_count,
@@ -392,7 +398,259 @@ def edit_poll(token):
                            poll         = poll,
                            options_data = options_data,
                            vote_count   = vote_count,
-                           is_started    = is_started)
+                           is_started    = is_started,
+                           cancel_url = url_for('poll_detail', token=token))
+
+# Admin edit route (new)
+@app.route('/admin/poll/<string:token>/edit')
+@admin_required
+def admin_edit_poll(token):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+
+    # Admin can edit ANY poll — no user_id check
+    cursor.execute("""
+        SELECT * FROM polls
+        WHERE share_token = %s AND status = 1
+    """, (token,))
+    poll = cursor.fetchone()
+
+    if not poll:
+        cursor.close()
+        conn.close()
+        return render_template('404.html'), 404
+
+    poll_id = poll["id"]
+    now     = datetime.now(timezone.utc)
+
+    end_time = poll['end_time']
+    if end_time and end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
+
+    is_expired = now > end_time
+    is_started = now >= poll['start_time']
+
+    if is_expired:
+        cursor.close()
+        conn.close()
+        flash('Cannot edit expired poll.', 'warning')
+        return redirect(url_for('admin_polls'))
+
+    cursor.execute("""
+        SELECT
+            o.id, o.option, o.media_id,
+            m.file_path, m.file_type,
+            m.original_name
+        FROM options o
+        LEFT JOIN media m ON m.id = o.media_id
+        WHERE o.poll_id = %s AND o.status = 1
+    """, (poll_id,))
+    options = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT COUNT(*) as count FROM votes
+        WHERE poll_id = %s
+    """, (poll_id,))
+    vote_count = cursor.fetchone()['count']
+
+    cursor.close()
+    conn.close()
+
+    options_data = [{
+        'id':            o['id'],
+        'text':          o['option'],
+        'media_id':      o['media_id'],
+        'file_path':     o['file_path'],
+        'file_type':     o['file_type'],
+        'original_name': o['original_name']
+    } for o in options]
+
+    return render_template(
+        'admin_edit_poll.html',
+        active_page  = 'admin_polls',
+        poll         = poll,
+        options_data = options_data,
+        vote_count   = vote_count,
+        is_started   = is_started,
+        cancel_url   = '/admin/polls'
+    )
+
+
+# ── POST /admin/poll/<token>/edit ─────────────────────────
+@app.route('/admin/poll/<string:token>/edit',
+           methods=['POST'])
+@admin_required
+def admin_edit_poll_submit(token):
+    data      = request.get_json()
+    question  = data.get("question", "").strip()
+    end_time  = data.get("end_time", "")
+    poll_type = data.get("poll_type", "single")
+    options   = data.get("options", [])
+
+    if not end_time:
+        return jsonify({"error": "End time required."}), 400
+
+    valid_options = [
+        o for o in options
+        if (o.get("text", "").strip() or
+            o.get("file_data") or
+            o.get("media_id"))
+    ]
+    if len(valid_options) < 2:
+        return jsonify({
+            "error": "At least 2 options required."
+        }), 400
+
+    option_texts = [
+        o.get("text", "").strip().lower()
+        for o in valid_options
+        if o.get("text", "").strip()
+    ]
+    if len(option_texts) != len(set(option_texts)):
+        return jsonify({
+            "error": "All options must be unique."
+        }), 400
+
+    try:
+        ist   = pytz.timezone('Asia/Kolkata')
+        end_dt = datetime.fromisoformat(end_time)
+        if end_dt.tzinfo is None:
+            end_dt = ist.localize(end_dt)
+        end_dt = end_dt.astimezone(timezone.utc)
+        if end_dt <= datetime.now(timezone.utc):
+            return jsonify({
+                "error": "End time must be in the future."
+            }), 400
+    except ValueError:
+        return jsonify({"error": "Invalid end time."}), 400
+
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+
+    # Admin — no user_id restriction
+    cursor.execute("""
+        SELECT * FROM polls
+        WHERE share_token = %s AND status = 1
+    """, (token,))
+    poll = cursor.fetchone()
+
+    if not poll:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Poll not found."}), 404
+
+    poll_id    = poll["id"]
+    is_started = datetime.now(timezone.utc) >= poll['start_time']
+
+    cursor.execute("""
+        SELECT COUNT(*) as count FROM votes
+        WHERE poll_id = %s
+    """, (poll_id,))
+    vote_count = cursor.fetchone()['count']
+
+    try:
+        if is_started:
+            cursor.execute("""
+                UPDATE polls SET end_time=%s WHERE id=%s
+            """, (end_dt, poll_id))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "message": "Poll end time updated!"
+            }), 200
+
+        if vote_count == 0:
+            cursor.execute("""
+                UPDATE polls
+                SET question=%s, end_time=%s, poll_type=%s
+                WHERE id=%s
+            """, (question, end_dt, poll_type, poll_id))
+        else:
+            cursor.execute("""
+                UPDATE polls
+                SET question=%s, end_time=%s
+                WHERE id=%s
+            """, (question, end_dt, poll_id))
+
+        os.makedirs(UPLOADS_FOLDER, exist_ok=True)
+
+        for opt in valid_options:
+            option_id    = opt.get("id")
+            text         = opt.get("text", "").strip()
+            file_data    = opt.get("file_data")
+            file_name    = opt.get("file_name")
+            file_type    = opt.get("file_type")
+            file_size    = opt.get("file_size", 0)
+            remove_file  = opt.get("remove_file", False)
+            media_id     = opt.get("media_id")
+            new_media_id = media_id
+
+            if remove_file:
+                new_media_id = None
+            elif file_data and file_name:
+                ext         = os.path.splitext(file_name)[1].lower()
+                unique_name = f"{uuid.uuid4()}{ext}"
+                file_path   = os.path.join(UPLOADS_FOLDER, unique_name)
+                file_bytes  = base64.b64decode(file_data)
+                with open(file_path, 'wb') as f:
+                    f.write(file_bytes)
+                cursor.execute("""
+                    INSERT INTO media
+                        (file_name, file_path, file_type,
+                         file_size, original_name,
+                         created_at, created_id, status)
+                    VALUES (%s,%s,%s,%s,%s,NOW(),%s,1)
+                    RETURNING id
+                """, (
+                    unique_name,
+                    f"uploads/{unique_name}",
+                    file_type, file_size, file_name,
+                    session.get('user_id')
+                ))
+                new_media_id = cursor.fetchone()['id']
+
+            if option_id:
+                cursor.execute("""
+                    UPDATE options
+                    SET option=%s, media_id=%s
+                    WHERE id=%s AND poll_id=%s
+                """, (text, new_media_id, option_id, poll_id))
+            else:
+                cursor.execute("""
+                    INSERT INTO options
+                        (poll_id, option, media_id,
+                         status, created_at, created_id)
+                    VALUES (%s,%s,%s,1,NOW(),%s)
+                """, (poll_id, text, new_media_id,
+                      session.get('user_id')))
+
+        kept_ids = [o.get("id") for o in valid_options if o.get("id")]
+        if kept_ids:
+            placeholders = ",".join(["%s"] * len(kept_ids))
+            cursor.execute(f"""
+                UPDATE options SET status = 0
+                WHERE poll_id = %s
+                AND id NOT IN ({placeholders})
+            """, [poll_id] + kept_ids)
+        else:
+            cursor.execute("""
+                UPDATE options SET status = 0
+                WHERE poll_id = %s
+            """, (poll_id,))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        print(f"Admin edit poll error: {e}")
+        return jsonify({"error": "Failed to update poll."}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({"message": "Poll updated successfully!"}), 200  
 
 
 # ── Edit Poll POST ────────────────────────────────────────
@@ -600,6 +858,82 @@ def edit_poll_submit(token):
     }), 200
 
 
+@app.route('/admin/poll/<string:token>')
+@admin_required
+def admin_poll_detail(token):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM polls
+        WHERE share_token = %s AND status = 1
+    """, (token,))
+    poll = cursor.fetchone()
+
+    if not poll:
+        cursor.close()
+        conn.close()
+        return render_template('404.html'), 404
+
+    poll_id = poll["id"]
+
+    cursor.execute("""
+        SELECT
+            o.id,
+            o.option,
+            COUNT(v.id) as vote_count
+        FROM options o
+        LEFT JOIN votes v ON v.selected_option_id = o.id
+        WHERE o.poll_id = %s AND o.status = 1
+        GROUP BY o.id, o.option
+    """, (poll_id,))
+    options = cursor.fetchall()
+    total_votes = sum(o['vote_count'] for o in options)
+
+    options_data = []
+    for o in options:
+        percentage = round(
+            (o['vote_count'] / total_votes * 100), 1
+        ) if total_votes > 0 else 0
+        options_data.append({
+            'id':         o['id'],
+            'text':       o['option'],
+            'votes':      o['vote_count'],
+            'percentage': percentage
+        })
+
+    cursor.execute("""
+        SELECT
+            v.id,
+            v.created_at,
+            vi.encrypted_identifier
+        FROM votes v
+        LEFT JOIN vote_identity vi ON vi.vote_id = v.id
+        WHERE v.poll_id = %s
+        ORDER BY v.created_at DESC
+    """, (poll_id,))
+    logs = cursor.fetchall()
+
+    now = datetime.now(timezone.utc)
+    end_time = poll['end_time']
+    if end_time and end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
+    is_expired = now > end_time
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "admin_poll_detail.html",
+        poll=poll,
+        options_data=options_data,
+        total_votes=total_votes,
+        logs=logs,
+        is_expired=is_expired,
+        is_creator=True,
+        active_page="admin_polls"
+    )
+
 # ── Delete Poll ───────────────────────────────────────────
 @app.route('/dashboard/poll/<string:token>/delete',
            methods=['POST'])
@@ -632,6 +966,35 @@ def delete_poll(token):
     return jsonify({"message": "Poll deleted"}), 200
 
 
+# ── POST /admin/poll/<token>/delete ───────────────────────
+@app.route('/admin/poll/<string:token>/delete',
+           methods=['POST'])
+@admin_required
+def admin_delete_poll(token):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+
+    # Admin — no user_id check
+    cursor.execute("""
+        SELECT * FROM polls
+        WHERE share_token = %s
+    """, (token,))
+    poll = cursor.fetchone()
+
+    if not poll:
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Poll not found"}), 404
+
+    cursor.execute(
+        "UPDATE polls SET status = 0 WHERE id = %s",
+        (poll["id"],)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"message": "Poll deleted"}), 200
 # ── Public Polls ──────────────────────────────────────────
 @app.route('/polls')
 def polls_list():
@@ -1167,6 +1530,85 @@ def admin_ban_user(user_id):
         "new_status": new_status
     }), 200
 
+# ── POST /admin/users/add ─────────────────────────────────
+@app.route('/admin/users/add', methods=['POST'])
+@admin_required
+def admin_add_user():
+    data       = request.get_json()
+    first_name = data.get('first_name', '').strip()
+    last_name  = data.get('last_name', '').strip()
+    email      = data.get('email', '').strip()
+    password   = data.get('password', '').strip()
+    status     = data.get('status', 1)
+
+    # ── Validate ──────────────────────────────────────────
+    if not first_name or not last_name \
+       or not email or not password:
+        return jsonify({
+            "error": "All fields are required."
+        }), 400
+
+    if len(password) < 6:
+        return jsonify({
+            "error": "Password must be at least 6 characters."
+        }), 400
+
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+
+    # Check duplicate email
+    cursor.execute(
+        "SELECT id FROM users WHERE email = %s", (email,)
+    )
+    if cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return jsonify({
+            "error": "An account with this email already exists."
+        }), 400
+
+    try:
+        # Hash password
+        hashed = bcrypt.hashpw(
+            password.encode('utf-8'),
+            bcrypt.gensalt()
+        ).decode('utf-8')
+
+        # Insert user
+        cursor.execute("""
+            INSERT INTO users
+                (first_name, last_name, email,
+                 password, role, created_at,
+                 status)
+            VALUES (%s, %s, %s, %s, 'user', NOW(), %s)
+            RETURNING id
+        """, (first_name, last_name, email,
+              hashed, status))
+        new_id = cursor.fetchone()['id']
+
+        # Set created_id to own id
+        cursor.execute("""
+            UPDATE users SET created_id = %s
+            WHERE id = %s
+        """, (new_id, new_id))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        print(f"Admin add user error: {e}")
+        return jsonify({
+            "error": "Failed to create user."
+        }), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify({
+        "message": "User created successfully!",
+        "user_id": new_id
+    }), 201
 
 # ── Admin Reports ─────────────────────────────────────────
 @app.route('/admin/reports')
@@ -1539,7 +1981,7 @@ def _build_excel_report(report_type, filter_status, report_data):
     sheet["A1"] = f"PulsePoll - {title}"
     sheet["A1"].font = title_font
     sheet["A2"] = "Generated At"
-    sheet["B2"] = datetime.now().strftime("%d %b %Y, %I:%M %p")
+    sheet["B2"] = format_ist_export(datetime.now(timezone.utc))
     sheet["A3"] = "Filter"
     sheet["B3"] = filter_text
     sheet["A2"].font = bold_font
@@ -1557,7 +1999,7 @@ def _build_excel_report(report_type, filter_status, report_data):
         headers = ["#", "Name", "Email", "Polls Created", "Joined Date", "Status"]
         rows = []
         for idx, user in enumerate(report_data.get("users_list", []), start=1):
-            joined = user["created_at"].strftime("%d %b %Y") if user.get("created_at") else "-"
+            joined = format_ist_export(user.get("created_at"), "%d %b %Y")
             full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
             status_text = "Active" if user.get("status") == 1 else "Inactive"
             rows.append([idx, full_name, user.get("email", ""), user.get("poll_count", 0), joined, status_text])
@@ -1574,7 +2016,7 @@ def _build_excel_report(report_type, filter_status, report_data):
         rows = []
         for idx, poll in enumerate(report_data.get("polls_list", []), start=1):
             creator = f"{poll.get('first_name', '')} {poll.get('last_name', '')}".strip()
-            end_time = poll["end_time"].strftime("%d %b %Y, %I:%M %p") if poll.get("end_time") else "-"
+            end_time = format_ist_export(poll.get("end_time"))
             rows.append([idx, poll.get("question", ""), creator, poll.get("poll_type", "").title(),
                          poll.get("vote_count", 0), end_time, poll.get("poll_status", "")])
 
@@ -1629,7 +2071,7 @@ def _build_pdf_report(report_type, filter_status, report_data):
 
     story.append(Paragraph(f"<b>PulsePoll - {title}</b>", styles["Title"]))
     story.append(Spacer(1, 6))
-    story.append(Paragraph(f"Generated At: {datetime.now().strftime('%d %b %Y, %I:%M %p')}", styles["Normal"]))
+    story.append(Paragraph(f"Generated At: {format_ist_export(datetime.now(timezone.utc))}", styles["Normal"]))
     story.append(Paragraph(f"Filter: {filter_text}", styles["Normal"]))
     story.append(Spacer(1, 12))
 
@@ -1643,7 +2085,7 @@ def _build_pdf_report(report_type, filter_status, report_data):
         ]
         details = [["#", "Name", "Email", "Polls Created", "Joined Date", "Status"]]
         for idx, user in enumerate(report_data.get("users_list", []), start=1):
-            joined = user["created_at"].strftime("%d %b %Y") if user.get("created_at") else "-"
+            joined = format_ist_export(user.get("created_at"), "%d %b %Y")
             full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
             status_text = "Active" if user.get("status") == 1 else "Inactive"
             details.append([idx, full_name, user.get("email", ""), user.get("poll_count", 0), joined, status_text])
@@ -1659,7 +2101,7 @@ def _build_pdf_report(report_type, filter_status, report_data):
         details = [["#", "Question", "Created By", "Type", "Votes", "End Time", "Status"]]
         for idx, poll in enumerate(report_data.get("polls_list", []), start=1):
             creator = f"{poll.get('first_name', '')} {poll.get('last_name', '')}".strip()
-            end_time = poll["end_time"].strftime("%d %b %Y, %I:%M %p") if poll.get("end_time") else "-"
+            end_time = format_ist_export(poll.get("end_time"))
             details.append([idx, poll.get("question", ""), creator, poll.get("poll_type", "").title(),
                             poll.get("vote_count", 0), end_time, poll.get("poll_status", "")])
 
@@ -1702,7 +2144,7 @@ def export_admin_report():
         return jsonify({"error": "Invalid export format."}), 400
 
     report_data = _get_report_data_for_export(report_type, filter_status)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now().strftime("%d%m%Y_%H%M%S")
     filename = f"{report_type}_report_{ts}"
 
     if export_format == "xlsx":

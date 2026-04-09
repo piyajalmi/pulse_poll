@@ -287,7 +287,7 @@ if (uniqueTexts.size !== optionTexts.length) {
             message.classList.remove("d-none");
 
             setTimeout(() => {
-                window.location.href = `/dashboard/polls`;
+                window.location.href = CANCEL_URL;
             }, 1500);
 
         } else {

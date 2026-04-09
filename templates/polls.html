@@ -31,17 +31,19 @@
 
                     <!-- Status Badge -->
                     <div class="pl-card-top">
-                        <span class="mp-badge
+                        <span class="mp-badge js-poll-status
                             {% if poll.status == 'Active' %}
                                 mp-badge-active
                             {% elif poll.status == 'Not Started' %}
                                 mp-badge-not-started
                             {% else %}
                                 mp-badge-expired
-                            {% endif %}">
+                            {% endif %}"
+                            data-poll-start="{{ poll.start_time.isoformat() if poll.start_time else '' }}"
+                            data-poll-end="{{ poll.end_time.isoformat() if poll.end_time else '' }}">
                             <i class="bi bi-circle-fill me-1"
                                style="font-size:0.4rem;"></i>
-                            {{ poll.status }}
+                            <span class="js-poll-status-text">{{ poll.status }}</span>
                         </span>
                     </div>
 

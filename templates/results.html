@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Firebase SDK -->
+
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 {% endblock %}
@@ -16,131 +16,172 @@
             <div class="col-lg-7 col-md-9">
 
                 {% if show_results %}
-                <!-- ── Full Results ────────────────────── -->
-                <!-- Visible to: creator always,
-                     everyone after expiry            -->
 
-                {% if is_expired %}
-                <div class="pp-banner pp-banner-ended mb-4">
-                    <i class="bi bi-lock-fill me-2"></i>
-                    Voting has ended.
-                    Here are the final results.
-                </div>
-                {% else %}
-                {% set user_role = session.get('role') %}
-                {% if user_role == 'admin' %}
-                <div class="pp-banner pp-banner-live mb-4">
-                    <i class="bi bi-shield-fill me-2"></i>
-                    Viewing as poll Admin
-                    <i class="bi bi-circle-fill ms-2
-                               pp-live-dot"></i>
-                    Live
-                </div>
-                {% else %}
-                <div class="pp-banner pp-banner-live mb-4">
-                    <i class="bi bi-person-fill me-2"></i>
-                    Viewing as poll Creator
-                    <i class="bi bi-circle-fill ms-2
-                               pp-live-dot"></i>
-                    Live
-                </div>
-                {% endif %}
-                {% endif %}
 
-                <div class="pp-card">
-                    <div class="pp-results-header mb-4">
-                        <h3 class="pp-question">
-                            {{ poll.question }}
-                        </h3>
-                        {% if not is_expired %}
-                        <div class="pp-timer"
-                             id="timerDisplay">
-                            <i class="bi bi-clock me-1"></i>
-                            <span id="timerText">
-                                Loading...
-                            </span>
-                        </div>
-                        {% else %}
-                        <div class="pp-timer"
-                             style="background:#f1f5f9;
-                                    color:#94a3b8;">
-                            <i class="bi bi-lock me-1"></i>
-                            Poll Closed
-                        </div>
+{% if is_expired %}
+<div class="pp-banner pp-banner-ended mb-4">
+    <i class="bi bi-lock-fill me-2"></i>
+    Voting has ended. Here are the final results.
+</div>
+{% else %}
+    {% if session.get('role') == 'admin' %}
+    <div class="pp-banner pp-banner-live mb-4">
+        <i class="bi bi-shield-fill me-2"></i>
+        Viewing as Admin
+        <i class="bi bi-circle-fill ms-2 pp-live-dot"></i>
+        Live
+    </div>
+    {% else %}
+    <div class="pp-banner pp-banner-live mb-4">
+        <i class="bi bi-person-fill me-2"></i>
+        Viewing as poll Creator
+        <i class="bi bi-circle-fill ms-2 pp-live-dot"></i>
+        Live
+    </div>
+    {% endif %}
+{% endif %}
+
+<div class="pp-card">
+
+   
+    <div class="pp-results-header mb-4">
+        <h3 class="pp-question">{{ poll.question }}</h3>
+        {% if not is_expired %}
+        <div class="pp-timer" id="timerDisplay">
+            <i class="bi bi-clock me-1"></i>
+            <span id="timerText">Loading...</span>
+        </div>
+        {% else %}
+        <div class="pp-timer"
+             style="background:#f1f5f9; color:#94a3b8;">
+            <i class="bi bi-lock me-1"></i>
+            Poll Closed
+        </div>
+        {% endif %}
+    </div>
+
+   
+    {% if is_creator or is_admin %}
+
+        <div id="loadingState" class="text-center py-4">
+            <div class="spinner-border"
+                 style="color:#4f46e5;"></div>
+            <p class="text-muted mt-2">Loading results...</p>
+        </div>
+
+        <div id="resultsContent" class="d-none">
+            <div class="pp-chart-container mb-4">
+                <canvas id="resultsChart"></canvas>
+            </div>
+            <div id="optionBreakdown" class="mb-4"></div>
+            <div class="pp-total-votes text-center">
+                <span class="pp-total-label">
+                    Total Votes:
+                </span>
+                <span class="pp-total-number"
+                      id="totalVotes">0</span>
+            </div>
+        </div>
+
+    
+    {% else %}
+
+        <!-- Most voted message -->
+        {% if most_voted and total_votes > 0 %}
+        <div class="rv-most-voted-banner mb-4">
+            <i class="bi bi-trophy-fill me-2"
+               style="color:#f59e0b;"></i>
+            <span>
+                <strong>{{ most_voted }}</strong>
+                was the most voted option!
+            </span>
+        </div>
+        {% endif %}
+
+        
+        {% if has_voted and voted_option %}
+        <div class="rv-your-vote mb-4">
+            <i class="bi bi-check2-circle me-2"
+               style="color:#4f46e5;"></i>
+            You voted for:
+            <strong>{{ voted_option }}</strong>
+        </div>
+        {% endif %}
+
+        
+        {% if options_list %}
+        <div class="rv-options-list mb-4">
+            {% for option in options_list %}
+            <div class="rv-option-row mb-3">
+
+                
+                <div class="rv-option-label mb-1">
+                    <span class="rv-option-text
+                        {% if voted_option == option.text %}
+                        rv-option-voted
                         {% endif %}
-                    </div>
-
-                    <div id="loadingState"
-                         class="text-center py-4">
-                        <div class="spinner-border"
-                             style="color:#4f46e5;"></div>
-                        <p class="text-muted mt-2">
-                            Loading results...
-                        </p>
-                    </div>
-
-                    <div id="resultsContent"
-                         class="d-none">
-                        <div class="pp-chart-container mb-4">
-                            <canvas id="resultsChart">
-                            </canvas>
-                        </div>
-                        <div id="optionBreakdown"
-                             class="mb-4"></div>
-                        <div class="pp-total-votes
-                                    text-center">
-                            <span class="pp-total-label">
-                                Total Votes:
-                            </span>
-                            <span class="pp-total-number"
-                                  id="totalVotes">
-                                0
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-3
-                                justify-content-center
-                                mt-4 flex-wrap">
-                        <a href="/poll/{{ poll.share_token }}"
-                           class="btn btn-pp-outline">
-                            <i class="bi bi-arrow-left
-                                      me-2"></i>
-                            Back to Poll
-                        </a>
-                    </div>
-
-                    <!-- <div class="pp-share-box mt-4">
-                        <small class="text-muted">
-                            Share results:
-                        </small>
-                        <div class="input-group mt-1">
-                            <input type="text"
-                                   class="form-control
-                                          pp-input"
-                                   id="shareLink"
-                                   value="{{ request.host_url }}poll/{{ poll.id }}/results"
-                                   readonly>
-                            <button class="btn btn-pp-outline"
-                                    type="button"
-                                    onclick="copyLink()">
-                                <i class="bi bi-clipboard">
-                                </i>
-                            </button>
-                        </div>
-                        <div id="copyMsg"
-                             class="text-success small
-                                    mt-1 d-none">
-                            <i class="bi bi-check2 me-1"></i>
-                            Link copied!
-                        </div>
-                    </div> -->
+                        {% if most_voted == option.text %}
+                        rv-option-winner
+                        {% endif %}">
+                        {% if most_voted == option.text %}
+                        <i class="bi bi-trophy-fill me-1"
+                           style="color:#f59e0b; font-size:0.8rem;">
+                        </i>
+                        {% endif %}
+                        {% if voted_option == option.text %}
+                        <i class="bi bi-check2-circle me-1"
+                           style="color:#4f46e5; font-size:0.8rem;">
+                        </i>
+                        {% endif %}
+                        {{ option.text }}
+                    </span>
                 </div>
+
+                
+                <div class="rv-progress-bg">
+                    <div class="rv-progress-fill
+                        {% if most_voted == option.text %}
+                        rv-progress-winner
+                        {% endif %}"
+                         style="width: {{ option.percentage }}%">
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="rv-votes-total text-center">
+            <span class="rv-votes-label">
+                <i class="bi bi-people-fill me-1"></i>
+                {{ total_votes }} people voted
+            </span>
+        </div>
+
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox" style="font-size:2rem;"></i>
+            <p class="mt-2">No votes yet.</p>
+        </div>
+        {% endif %}
+
+    {% endif %}
+    
+
+    <div class="d-flex gap-3 justify-content-center
+                mt-4 flex-wrap">
+        <a href="/polls" class="btn btn-pp-outline">
+            <i class="bi bi-arrow-left me-2"></i>
+            Back to Polls
+        </a>
+    </div>
+
+</div>
+<!-- end pp-card -->
 
                 {% elif has_voted %}
-                <!-- ── Voter confirmation ─────────────── -->
-                <!-- Poll still active, voter has voted   -->
-                <div class="pp-card text-center">
+              
+                <div class="pp-card text-center" >
                     <i class="bi bi-check-circle-fill mb-3"
                        style="font-size:3rem;
                               color:#4f46e5;"></i>
@@ -166,12 +207,7 @@
                     </div>
                     {% endif %}
 
-                    <!-- <div class="rv-locked-msg mb-4">
-                        <i class="bi bi-lock-fill me-2"
-                           style="color:#94a3b8;"></i>
-                        Results will be available
-                        once the poll ends.
-                    </div> -->
+                   
 
                     <a href="/"
                        class="btn btn-pp-primary">
@@ -181,7 +217,7 @@
                 </div>
 
                 {% else %}
-                <!-- ── Not voted, poll still active ──── -->
+                
                 <div class="pp-card text-center">
                     <i class="bi bi-hourglass-split mb-3"
                        style="font-size:3rem;
@@ -190,10 +226,7 @@
                         style="color:#1e1b4b;">
                         Poll is still running
                     </h4>
-                    <!-- <p class="text-muted mb-4">
-                        Results will be visible
-                        once voting ends.
-                    </p> -->
+                    
                     <a href="/poll/{{ poll.share_token }}"
                        class="btn btn-pp-primary">
                         <i class="bi bi-hand-index-thumb
@@ -212,11 +245,13 @@
 {% block extra_js %}
 <script>
     const POLL_ID    = "{{ poll.id }}";
-    const END_TIME   = "{{ poll.end_time.isoformat() if poll.end_time else '' }}";
+    const END_TIME = "{{ poll['end_time'].isoformat() if poll['end_time'] else '' }}";
     const POLL_TOKEN   = "{{ poll.share_token }}";
     const IS_EXPIRED = "{{ is_expired }}" === "True";
     const SHOW_RESULTS = "{{ show_results }}" === "True";
-
+    const IS_CREATOR   = "{{ is_creator }}" === "True"; 
+    const IS_ADMIN     = "{{ is_admin }}"   === "True";
+    
     const firebaseConfig = {
   apiKey: "AIzaSyCNuWmSEY_6taf_Oe2S0Dvrqe_1c7DuUrc",
   authDomain: "pulsepoll-e4314.firebaseapp.com",

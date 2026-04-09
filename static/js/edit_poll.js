@@ -272,9 +272,17 @@ if (uniqueTexts.size !== optionTexts.length) {
         <span class="spinner-border spinner-border-sm me-2">
         </span>Saving...`;
 
+    const submitUrl = (typeof SUBMIT_URL !== "undefined" && SUBMIT_URL)
+        ? SUBMIT_URL
+        : `/dashboard/poll/${POLL_TOKEN}/edit`;
+
+    const afterSaveUrl = submitUrl.startsWith("/admin/")
+        ? "/admin/polls"
+        : "/dashboard/polls";
+
     try {
         const response = await fetch(
-            `/dashboard/poll/${POLL_TOKEN}/edit`, {
+            submitUrl, {
             method:  "POST",
             headers: { "Content-Type": "application/json" },
             body:    JSON.stringify({
@@ -295,7 +303,7 @@ if (uniqueTexts.size !== optionTexts.length) {
             message.classList.remove("d-none");
 
             setTimeout(() => {
-                window.location.href = `/dashboard/polls`;
+                window.location.href = afterSaveUrl;
             }, 1500);
 
         } else {

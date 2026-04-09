@@ -40,12 +40,12 @@
                     <option value="users"
                         {% if report_type == 'users' %}
                         selected{% endif %}>
-                        👥 Users Summary Report
+                         Users Summary Report
                     </option>
                     <option value="polls"
                         {% if report_type == 'polls' %}
                         selected{% endif %}>
-                        📊 Polls Summary Report
+                         Polls Summary Report
                     </option>
                 </select>
             </div>
@@ -104,21 +104,22 @@
             </div>
 
             <!-- Export buttons -->
-            <div class="rp-selector-group
-                        rp-selector-action">
+            <div class="rp-selector-group rp-selector-action">
                 <label class="rp-selector-label">
                     &nbsp;
                 </label>
-                <a class="rp-export-btn"
-                   href="/admin/reports/export?type={{ report_type }}&status={{ filter_status }}&format=pdf">
-                    <i class="bi bi-file-pdf-fill me-2"></i>
-                    Export PDF
-                </a>
-                <a class="rp-export-btn"
-                   href="/admin/reports/export?type={{ report_type }}&status={{ filter_status }}&format=xlsx">
-                    <i class="bi bi-file-earmark-excel-fill me-2"></i>
-                    Export Excel
-                </a>
+                <div class="rp-export-actions">
+                    <a class="rp-export-btn"
+                       href="/admin/reports/export?type={{ report_type }}&status={{ filter_status }}&format=pdf">
+                        <i class="bi bi-file-pdf-fill me-2"></i>
+                        Export PDF
+                    </a>
+                    <a class="rp-export-btn rp-export-btn-excel"
+                       href="/admin/reports/export?type={{ report_type }}&status={{ filter_status }}&format=xlsx">
+                        <i class="bi bi-file-earmark-excel-fill me-2"></i>
+                        Export Excel
+                    </a>
+                </div>
             </div>
             {% endif %}
 
@@ -239,52 +240,43 @@
 
     {% if report_data.users_list %}
     <div class="admin-table-scroll-wrapper">
-    <div class="rp-table">
-
-        <!-- Header -->
-        <div class="rp-table-row rp-table-head">
-            <span>#</span>
-            <span>Name</span>
-            <span>Email</span>
-            <span>Polls Created</span>
-            <span>Joined Date</span>
-            <span>Status</span>
-        </div>
-
-        <!-- Rows -->
-        {% for user in report_data.users_list %}
-        <div class="rp-table-row">
-            <span class="rp-cell-muted">
-                {{ loop.index }}
-            </span>
-            <span class="rp-cell-bold">
-                {{ user.first_name }} {{ user.last_name }}
-            </span>
-            <span class="rp-cell-muted">
-                {{ user.email }}
-            </span>
-            <span class="rp-cell-bold">
-                {{ user.poll_count }}
-            </span>
-            <span class="rp-cell-muted">
-                {{ user.created_at.strftime('%d %b %Y')
-                   if user.created_at else '—' }}
-            </span>
-            <span>
-                <span class="au-status-badge
-                    {% if user.status == 1 %}
-                    au-status-active
-                    {% else %}
-                    au-status-banned
-                    {% endif %}">
-                    {{ 'Active' if user.status == 1
-                       else 'Inactive' }}
-                </span>
-            </span>
-        </div>
-        {% endfor %}
-
-    </div>
+    <table id="reportUsersTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th>Sr.no</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Polls Created</th>
+                <th>Joined Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in report_data.users_list %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.poll_count }}</td>
+                <td>
+                    {{ user.created_at.strftime('%d %b %Y')
+                       if user.created_at else 'â€”' }}
+                </td>
+                <td>
+                    <span class="au-status-badge
+                        {% if user.status == 1 %}
+                        au-status-active
+                        {% else %}
+                        au-status-banned
+                        {% endif %}">
+                        {{ 'Active' if user.status == 1
+                           else 'Inactive' }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     </div>
     {% else %}
     <div class="rp-no-data">
@@ -435,63 +427,54 @@
 
     {% if report_data.polls_list %}
     <div class="admin-table-scroll-wrapper">
-    <div class="rp-table">
-
-        <!-- Header -->
-        <div class="rp-table-row rp-table-head">
-            <span>#</span>
-            <span>Question</span>
-            <span>Created By</span>
-            <span>Type</span>
-            <span>Votes</span>
-            <span>End Time</span>
-            <span>Status</span>
-        </div>
-
-        <!-- Rows -->
-        {% for poll in report_data.polls_list %}
-        <div class="rp-table-row">
-            <span class="rp-cell-muted">
-                {{ loop.index }}
-            </span>
-            <span class="rp-cell-bold">
-                {{ poll.question }}
-            </span>
-            <span class="rp-cell-muted">
-                {{ poll.first_name }} {{ poll.last_name }}
-            </span>
-            <span>
-                <span class="admin-type-badge
-                    {% if poll.poll_type == 'multiple' %}
-                    admin-type-multiple
-                    {% else %}
-                    admin-type-single
-                    {% endif %}">
-                    {{ poll.poll_type.title() }}
-                </span>
-            </span>
-            <span class="rp-cell-bold">
-                {{ poll.vote_count }}
-            </span>
-            <span class="rp-cell-muted">
-                {{ poll.end_time|format_ist }}
-            </span>
-            <span>
-                <span class="db-poll-badge
-                    {% if poll.poll_status == 'Active' %}
-                    db-badge-active
-                    {% elif poll.poll_status == 'Not Started' %}
-                    mp-badge-not-started
-                    {% else %}
-                    mp-badge-expired
-                    {% endif %}">
-                    {{ poll.poll_status }}
-                </span>
-            </span>
-        </div>
-        {% endfor %}
-
-    </div>
+    <table id="reportPollsTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th>Sr.no</th>
+                <th>Question</th>
+                <th>Created By</th>
+                <th>Type</th>
+                <th>Votes</th>
+                <th>End Time</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for poll in report_data.polls_list %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ poll.question }}</td>
+                <td>{{ poll.first_name }} {{ poll.last_name }}</td>
+                <td>
+                    <span class="admin-type-badge
+                        {% if poll.poll_type == 'multiple' %}
+                        admin-type-multiple
+                        {% else %}
+                        admin-type-single
+                        {% endif %}">
+                        {{ poll.poll_type.title() }}
+                    </span>
+                </td>
+                <td>{{ poll.vote_count }}</td>
+                <td>{{ poll.end_time|format_ist }}</td>
+                <td>
+                    <span class="db-poll-badge js-poll-status
+                        {% if poll.poll_status == 'Active' %}
+                        db-badge-active
+                        {% elif poll.poll_status == 'Not Started' %}
+                        mp-badge-not-started
+                        {% else %}
+                        mp-badge-expired
+                        {% endif %}"
+                        data-poll-start="{{ poll.start_time.isoformat() if poll.start_time else '' }}"
+                        data-poll-end="{{ poll.end_time.isoformat() if poll.end_time else '' }}">
+                        <span class="js-poll-status-text">{{ poll.poll_status }}</span>
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     </div>
     {% else %}
     <div class="rp-no-data">
@@ -511,8 +494,10 @@
 document.addEventListener("DOMContentLoaded", function() {
     const dateEl = document.getElementById("printDate");
     if (dateEl) {
-        dateEl.textContent = new Date().toLocaleString(
-            'en-IN', {
+        // Get current time in IST explicitly
+        const now = new Date();
+         const istFormatter = new Intl.DateTimeFormat('en-IN', {
+            
                 day: '2-digit',
                 month: 'long',
                 year: 'numeric',
@@ -523,10 +508,31 @@ document.addEventListener("DOMContentLoaded", function() {
                 timeZone: 'Asia/Kolkata' 
             }
         );
+        dateEl.textContent = istFormatter.format(now);
     }
 });
 
 
 
+
+$(document).ready(function () {
+    if ($("#reportUsersTable").length && !$.fn.DataTable.isDataTable("#reportUsersTable")) {
+        $("#reportUsersTable").DataTable({
+            pageLength: 5,
+            ordering: true,
+            searching: true,
+            lengthChange: false
+        });
+    }
+
+    if ($("#reportPollsTable").length && !$.fn.DataTable.isDataTable("#reportPollsTable")) {
+        $("#reportPollsTable").DataTable({
+            pageLength: 5,
+            ordering: true,
+            searching: true,
+            lengthChange: false
+        });
+    }
+});
 </script>
 {% endblock %}

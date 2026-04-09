@@ -9,9 +9,9 @@
         <div class="row justify-content-center">
             <div class="col-lg-6 col-md-8">
 
-                <!-- ── Already Voted State ──────────────── -->
+                
                 {% if has_voted %}
-<!-- Already voted state -->
+
 <div class="pp-card text-center">
     <i class="bi bi-check-circle-fill mb-3"
        style="font-size:3rem; color:#4f46e5;"></i>
@@ -43,13 +43,15 @@
         <i class="bi bi-clock me-1"></i>
         {{ poll.start_time|format_ist }}
     </div>
-    <p class="text-muted small">
-        Come back when the poll starts to cast your vote.
+    <p class="text-muted small mb-1">
+        Voting opens in
+        <span id="startCountdown">Loading...</span>
     </p>
+    
 </div>
 
 {% elif is_expired %}
-<!-- Expired state -->
+
 <div class="pp-card text-center">
     <i class="bi bi-clock-history mb-3"
        style="font-size:3rem; color:#94a3b8;"></i>
@@ -66,15 +68,15 @@
     </a>
 </div>
 
-                <!-- ── Active Voting State ───────────────── -->
+                
                 {% else %}
 <div class="pp-card">
 
-    <!-- Poll Header -->
+   
     <div class="pp-vote-header mb-4">
         <h3 class="pp-question">{{ poll.question }}</h3>
 
-        <!-- Poll type indicator -->
+        
         <div class="pp-poll-type-badge mb-2">
             {% if poll.poll_type == 'multiple' %}
             <i class="bi bi-check2-square me-1"></i>
@@ -258,9 +260,11 @@
 {% block extra_js %}
 <script>
     const POLL_ID  = "{{ poll.id }}";
+    const START_TIME = "{{ poll.start_time.isoformat() if poll.start_time else '' }}";
     const END_TIME = "{{ poll.end_time.isoformat() }}";
     const POLL_TYPE = "{{ poll.poll_type }}";
     const POLL_TOKEN = "{{ poll.share_token }}";
+    const POLL_NOT_STARTED = {{ 'true' if not_started else 'false' }};
     
 </script>
 <script src="{{ url_for('static', filename='js/vote.js') }}">

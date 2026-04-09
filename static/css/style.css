@@ -12,6 +12,11 @@ body {
     display: flex;
     flex-direction: column;
 }
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 
 main {
     flex: 1;
@@ -1775,4 +1780,95 @@ h1 {
     transform: translateY(-50%);
     cursor: pointer;
     z-index: 100; /* Ensures the icon is clickable over the input */
+}
+/* ── Most Voted Banner ───────────────────────────────── */
+.rv-most-voted-banner {
+    background: linear-gradient(135deg,
+        #fffbeb, #fef3c7);
+    border: 1.5px solid #fde68a;
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    color: #92400e;
+}
+
+/* ── Your Vote Banner ────────────────────────────────── */
+.rv-your-vote {
+    background: #f5f3ff;
+    border: 1.5px solid #ddd6fe;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Options List ────────────────────────────────────── */
+.rv-options-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.rv-option-row {
+    margin-bottom: 16px;
+}
+
+.rv-option-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.rv-option-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1e1b4b;
+}
+
+/* Highlight voted option */
+.rv-option-voted {
+    color: #4f46e5;
+    font-weight: 700;
+}
+
+/* Highlight winning option */
+.rv-option-winner {
+    color: #92400e;
+    font-weight: 700;
+}
+
+/* ── Progress Bar ────────────────────────────────────── */
+.rv-progress-bg {
+    background: #f1f5f9;
+    border-radius: 50px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.rv-progress-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #818cf8, #a5b4fc);
+    transition: width 0.8s ease;
+    min-width: 4px;
+}
+
+/* Winner bar is gold */
+.rv-progress-winner {
+    background: linear-gradient(90deg, #f59e0b, #fcd34d);
+}
+
+/* ── Total votes ─────────────────────────────────────── */
+.rv-votes-total {
+    padding: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.rv-votes-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #64748b;
 }

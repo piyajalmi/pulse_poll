@@ -1,5 +1,5 @@
-{% extends "dashboard_base.html" %}
-{% block title %}Edit Poll — PulsePoll{% endblock %}
+{% extends "admin_base.html" %}
+{% block title %}Edit Poll — Admin PulsePoll{% endblock %}
 {% block extra_css %}
 <!-- any CSS -->
 {% endblock %}
@@ -9,8 +9,8 @@
 {% block extra_js %}
 <script>
     const IS_STARTED = {{ 'true' if is_started else 'false' }};
-    const CANCEL_URL = "{{ cancel_url }}";
-    const SUBMIT_URL = "/dashboard/poll/{{ poll.share_token }}/edit";
+    const CANCEL_URL = "/admin/polls";
+    const SUBMIT_URL = "/admin/poll/{{ poll.share_token }}/edit";
 </script>
 <script src="{{ url_for('static', filename='js/edit_poll.js') }}"></script>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %}
+﻿{% extends "admin_base.html" %}
 
 {% block title %}All Polls — Admin PulsePoll{% endblock %}
 
@@ -26,7 +26,7 @@
           class="admin-polls-filter-form"
           id="pollsFilterForm">
 
-        <!-- User filter -->
+        
         <div class="admin-filter-group">
             <label class="admin-filter-label">User</label>
             <select name="user_id"
@@ -44,7 +44,7 @@
             </select>
         </div>
 
-        <!-- Status filter -->
+       
         <div class="admin-filter-group">
             <label class="admin-filter-label">Status</label>
             <select name="status"
@@ -69,7 +69,7 @@
             </select>
         </div>
 
-        <!-- Date filter -->
+        
         <div class="admin-filter-group">
             <label class="admin-filter-label">Date</label>
             <input type="date"
@@ -79,7 +79,7 @@
                    onchange="this.form.submit()">
         </div>
 
-        <!-- Clear all filters -->
+      
         {% if filter_user or filter_status or filter_date %}
         <a href="/admin/polls"
            class="admin-filter-clear">
@@ -88,154 +88,150 @@
         </a>
         {% endif %}
 
+         <a href="/create" class="btn btn-pp-primary btn-sm justify-content-end ms-auto d-flex">
+        <i class="bi bi-plus-circle me-2"></i>
+        Create Poll
+    </a>
     </form>
+    
 </div>
 
-<!-- ── Polls Table ────────────────────────────────────── -->
+
 {% if polls %}
 <div class="admin-table-scroll-wrapper">
-<div class="db-polls-table-inner">
+<table id="adminPollsTable" class="table table-striped">
 
-    <!-- Header -->
-    <div class="admin-polls-header">
-        <span>Question</span>
-        <span>Created By</span>
-        <span>Type</span>
-        <span>Status</span>
-        <span>Votes</span>
-        <span>End Time</span>
-        <span>Actions</span>
-    </div>
+   
+    <thead>
+        <tr>
+            <th>Question</th>
+            <th>Created By</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Votes</th>
+            <th>End Time</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+<tbody>
+{% for poll in polls %}
+<tr>
 
-    <!-- Rows -->
-    {% for poll in polls %}
-    <div class="admin-polls-row">
+    <td>{{ poll.question }}</td>
 
-        <!-- Question -->
-        <span class="db-poll-question">
-            {{ poll.question }}
+    <td>
+        <i class="bi bi-person me-1"></i>
+        {{ poll.first_name }} {{ poll.last_name }}
+    </td>
+
+    <td>
+        <span class="admin-type-badge
+            {% if poll.poll_type == 'multiple' %}
+            admin-type-multiple
+            {% else %}
+            admin-type-single
+            {% endif %}">
+            {{ poll.poll_type|capitalize }}
         </span>
+    </td>
 
-        <!-- Creator -->
-        <span class="admin-poll-creator">
-            <i class="bi bi-person me-1"></i>
-            {{ poll.first_name }} {{ poll.last_name }}
+    <td>
+        <span class="db-poll-badge js-poll-status"
+              data-poll-start="{{ poll.start_time.isoformat() if poll.start_time else '' }}"
+              data-poll-end="{{ poll.end_time.isoformat() if poll.end_time else '' }}">
+            <span class="js-poll-status-text">{{ poll.status }}</span>
         </span>
+    </td>
 
-        <!-- Poll Type -->
-        <span>
-            <span class="admin-type-badge
-                {% if poll.poll_type == 'multiple' %}
-                admin-type-multiple
-                {% else %}
-                admin-type-single
-                {% endif %}">
-                {% if poll.poll_type == 'multiple' %}
-                <i class="bi bi-check2-square me-1"></i>
-                Multiple
-                {% else %}
-                <i class="bi bi-record-circle me-1"></i>
-                Single
-                {% endif %}
-            </span>
-        </span>
+    <td>{{ poll.vote_count }}</td>
 
-        <!-- Status -->
-        <span>
-            <span class="db-poll-badge
-                {% if poll.status == 'Active' %}
-                    db-badge-active
-                {% elif poll.status == 'Not Started' %}
-                    mp-badge-not-started
-                {% else %}
-                    mp-badge-expired
-                {% endif %}">
-                {{ poll.status }}
-            </span>
-        </span>
+    <td>{{ poll.end_time|format_ist }}</td>
 
-        <!-- Votes -->
-        <span class="db-poll-votes">
-            <i class="bi bi-hand-index-thumb me-1"></i>
-            {{ poll.vote_count }}
-        </span>
+    <td>
+        <div class="db-poll-actions">
 
-        <!-- End Time -->
-        <span class="local-time">
-            {{ poll.end_time|format_ist }}
-        </span>
-
-        <!-- Actions -->
-        <span class="db-poll-actions">
             <a href="/poll/{{ poll.share_token }}/results"
-               class="db-action-btn"
-               title="Results">
+               class="db-action-btn">
                 <i class="bi bi-bar-chart-fill"></i>
             </a>
-            <!-- <a href="/poll/{{ poll.share_token }}"
-               class="db-action-btn"
-               title="Vote Page">
+
+            <a href="/admin/poll/{{ poll.share_token }}"
+               class="db-action-btn">
                 <i class="bi bi-eye-fill"></i>
-            </a> -->
-        </span>
-
-    </div>
-    {% endfor %}
-
-</div>
-</div>
-
-<!-- ── Pagination ─────────────────────────────────────── -->
-{% if total_pages > 1 %}
-<div class="pagination-wrapper">
-    <div class="creative-pagination">
-
-        {% if current_page > 1 %}
-        <a href="/admin/polls?page={{ current_page - 1 }}
-                &user_id={{ filter_user }}
-                &status={{ filter_status }}
-                &date={{ filter_date }}"
-           class="page-arrow">
-            <i class="bi bi-chevron-left"></i>
-        </a>
-        {% endif %}
-
-        <div class="page-numbers">
-            {% for p in range(1, total_pages + 1) %}
-            <a href="/admin/polls?page={{ p }}
-                    &user_id={{ filter_user }}
-                    &status={{ filter_status }}
-                    &date={{ filter_date }}"
-               class="page-num
-               {% if p == current_page %}active{% endif %}">
-                {{ p }}
             </a>
-            {% endfor %}
+
+            {% if poll.status == 'Expired' %}
+            <span class="db-action-btn db-action-btn-disabled">
+                <i class="bi bi-pencil-fill"></i>
+            </span>
+            {% else %}
+            <a href="/admin/poll/{{ poll.share_token }}/edit"
+               class="db-action-btn">
+                <i class="bi bi-pencil-fill"></i>
+            </a>
+            {% endif %}
+
+            <button class="db-action-btn"
+                    onclick="adminDeletePoll('{{ poll.share_token }}')">
+                <i class="bi bi-trash-fill"></i>
+            </button>
+
         </div>
+    </td>
 
-        {% if current_page < total_pages %}
-        <a href="/admin/polls?page={{ current_page + 1 }}
-                &user_id={{ filter_user }}
-                &status={{ filter_status }}
-                &date={{ filter_date }}"
-           class="page-arrow">
-            <i class="bi bi-chevron-right"></i>
-        </a>
-        {% endif %}
+</tr>
+{% endfor %}
+</tbody>
 
-    </div>
 </div>
-{% endif %}
+</div>
+
+
+</table>
+</div>
+</div>
 
 {% else %}
 <div class="db-empty-state">
     <i class="bi bi-clipboard-x"></i>
-    <p>No polls found matching your filters.</p>
-    <a href="/admin/polls"
-       class="btn btn-pp-primary mt-2">
-        Clear Filters
-    </a>
+    <p>No polls found.</p>
 </div>
 {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+async function adminDeletePoll(token) {
+    if (!confirm("Delete this poll?")) return;
+    try {
+        const response = await fetch(
+            `/admin/poll/${token}/delete`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"}
+        });
+        const data = await response.json();
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert(data.error || "Failed to delete.");
+        }
+    } catch(e) {
+        alert("Network error.");
+    }
+}
 
+
+$(document).ready(function () {
+
+    if (!$.fn.DataTable.isDataTable('#adminPollsTable')) {
+        $('#adminPollsTable').DataTable({
+            pageLength: 5,
+            ordering: true,
+            searching: true,
+            lengthChange: false
+        });
+    }
+
+});
+
+</script>
 {% endblock %}

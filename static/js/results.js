@@ -7,12 +7,19 @@ let hasPollingStarted = false;
 document.addEventListener("DOMContentLoaded", function () {
     if (!SHOW_RESULTS) return;
 
+    if (IS_CREATOR || IS_ADMIN) {
     fetchResults();
 
     if (!IS_EXPIRED) {
         initFirebase();
         startTimer();
     }
+}
+else{
+    if (!IS_EXPIRED) {
+        startTimer();
+    }
+}
 });
 
 // ── Initialize Firebase realtime listener ─────────────────

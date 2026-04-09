@@ -623,7 +623,7 @@
 .db-action-btn {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border: none;
     background: #f5f3ff;
     color: #4f46e5;
     display: flex;
@@ -637,6 +637,12 @@
 .db-action-btn:hover {
     background: #4f46e5;
     color: #ffffff;
+}
+
+.db-action-btn-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* ── Empty State ──────────────────────────────────────── */
@@ -1949,6 +1955,14 @@
     margin-left: auto;
 }
 
+.rp-export-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 /* ── Export Button ────────────────────────────────────── */
 .rp-export-btn {
     background: linear-gradient(135deg, #ef4444, #f87171);
@@ -1962,15 +1976,28 @@
     transition: all 0.2s;
     display: flex;
     align-items: center;
+    justify-content: center;
     white-space: nowrap;
+    text-decoration: none;
 }
 
 .rp-export-btn:hover {
     background: linear-gradient(135deg, #dc2626, #ef4444);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    color: #ffffff;
 }
 
+.rp-export-btn-excel {
+    background: linear-gradient(135deg, #1d6f42, #2e8b57);
+}
+
+.rp-export-btn-excel:hover {
+    background: linear-gradient(135deg, #155732, #247249);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(29, 111, 66, 0.28);
+    color: #ffffff;
+}
 /* ── Empty State ──────────────────────────────────────── */
 .rp-empty-state {
     text-align: center;
@@ -2260,6 +2287,23 @@
 
 
 /*responsive*/
+
+@media (max-width: 768px) {
+    .rp-selector-action {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .rp-export-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .rp-export-btn {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+}
 
 /* MOBILE SIDEBAR */
 
@@ -2554,4 +2598,8 @@
         font-size: 0.78rem !important;
         padding: 4px 6px !important;
     }
+}
+table.dataTable {
+    border-radius: 10px;
+    overflow: hidden;
 }

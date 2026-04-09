@@ -4,6 +4,7 @@ let selectedOptionText = "";      // for modal display
 
 // ── Initialize ──────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
+    startStartCountdown();
     startTimer();
 });
 
@@ -154,6 +155,9 @@ function startTimer() {
     const timerText = document.getElementById("timerText");
     if (!timerText) return;
 
+    function pad(n) {
+        return String(n).padStart(2, "0");
+    }
     function updateTimer() {
         const diff = new Date(END_TIME) - new Date();
         if (diff <= 0) {
@@ -161,16 +165,96 @@ function startTimer() {
             setTimeout(() => location.reload(), 2000);
             return;
         }
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000)   / 1000);
-        timerText.textContent =
-            `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+        const days    = Math.floor(diff / 86400000);
+        const hours   = Math.floor((diff % 86400000) / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+
+        let timeStr = '';
+
+        if (days > 0) {
+            timeStr = `${days}d ${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+            timeStr = `${hours}h ${minutes}m ${pad(seconds)}s`;
+        } else if (minutes > 0) {
+            timeStr = `${minutes}m ${pad(seconds)}s`;
+        } else {
+            timeStr = `${seconds}s`;
+        }
+
+        timerText.textContent = timeStr;
     }
 
-    function pad(n) { return String(n).padStart(2, "0"); }
     updateTimer();
     setInterval(updateTimer, 1000);
+}
+
+// Realtime refresh for polls that have not opened yet
+function startStartCountdown() {
+    if (!POLL_NOT_STARTED) return;
+
+    const countdownEl = document.getElementById("startCountdown");
+    const statusEl = document.getElementById("startStatusMessage");
+    if (!countdownEl || !START_TIME) return;
+
+    const startMs = Date.parse(START_TIME);
+    if (!Number.isFinite(startMs)) {
+        countdownEl.textContent = "soon";
+        return;
+    }
+
+    let hasReloaded = false;
+
+    function pad(n) {
+        return String(n).padStart(2, "0");
+    }
+
+    function reloadWhenStarted() {
+        if (hasReloaded) return;
+        hasReloaded = true;
+
+        if (statusEl) {
+            statusEl.textContent = "Poll is live. Updating...";
+        }
+
+        window.setTimeout(() => {
+            window.location.reload();
+        }, 400);
+    }
+
+    function updateCountdown() {
+        const diff = startMs - Date.now();
+
+        if (diff <= 0) {
+            countdownEl.textContent = "0s";
+            reloadWhenStarted();
+            return;
+        }
+
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        let timeStr = "";
+
+        if (days > 0) {
+            timeStr = `${days}d ${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+            timeStr = `${hours}h ${minutes}m ${pad(seconds)}s`;
+        } else if (minutes > 0) {
+            timeStr = `${minutes}m ${pad(seconds)}s`;
+        } else {
+            timeStr = `${seconds}s`;
+        }
+
+        countdownEl.textContent = timeStr;
+    }
+
+    updateCountdown();
+    window.setInterval(updateCountdown, 1000);
+    window.setTimeout(reloadWhenStarted, Math.max(0, startMs - Date.now()) + 250);
 }
 
 // ── Copy share link ─────────────────────────────────────

@@ -32,9 +32,18 @@ def index():
 def create_poll_page():
     if 'user_name' not in session:
         return redirect(url_for('login'))
-    return render_template("create_poll.html",
-                           active_page='create_poll')
 
+    if session.get('role') == 'admin':
+        return render_template(
+            "create_poll_admin.html",
+            active_page='create_poll',
+            cancel_url='/admin/polls'
+        )
+        
+    return render_template("create_poll.html",
+                           active_page='create_poll',
+                           cancel_url='/dashboard/polls')
+    
 
 # ── POST /poll/create ─────────────────────────────────────
 @poll_bp.route("/poll/create", methods=["POST"])
@@ -326,68 +335,87 @@ def vote_page(token):
 # ── GET /poll/<token>/results ─────────────────────────────
 @poll_bp.route("/poll/<string:token>/results")
 def results_page(token):
-    conn   = get_db_connection()
-    cursor = conn.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor() # Ensure this is a DictCursor
+    
+    try:
+        # 1. Fetch Poll
+        cursor.execute("SELECT * FROM polls WHERE share_token = %s", (token,))
+        poll = cursor.fetchone()
+        
+        if not poll:
+            return render_template("404.html"), 404
+            
+        poll_id = poll["id"]
+        user_id = session.get('user_id')
+        
+        # 2. Check Permissions & Time
+        # Ensure db datetime is timezone aware or strip tz from 'now'
+        now = datetime.now(timezone.utc) 
+        is_expired = now >= poll["end_time"]
+        
+        # Safe comparison converting both to strings or ints
+        is_creator = user_id and str(user_id) == str(poll["user_id"])
+        is_admin = session.get('role') == 'admin'
+        show_results = is_expired or is_creator or is_admin
+        
+        # 3. Check User Vote
+        has_voted = False
+        voted_option = None
+        if user_id:
+            cursor.execute("""
+                SELECT v.id, o.option as voted_option 
+                FROM votes v 
+                JOIN options o ON o.id = v.selected_option_id 
+                WHERE v.poll_id = %s AND v.created_id = %s LIMIT 1
+            """, (poll_id, user_id))
+            vote = cursor.fetchone()
+            if vote:
+                has_voted = True
+                voted_option = vote['voted_option']
 
-    cursor.execute(
-        "SELECT * FROM polls WHERE share_token = %s",
-        (token,)
-    )
-    poll = cursor.fetchone()
+        # 4. Fetch Results (Reusing same connection)
+        cursor.execute("""
+            SELECT o.id, o.option, COUNT(DISTINCT v.submission_id) as vote_count 
+            FROM options o 
+            LEFT JOIN votes v ON v.selected_option_id = o.id 
+            WHERE o.poll_id = %s AND o.status = 1 
+            GROUP BY o.id, o.option 
+            ORDER BY vote_count DESC
+        """, (poll_id,))
+        options_data = cursor.fetchall()
 
-    if not poll:
+        # Calculate Total
+        total_votes = sum(o['vote_count'] for o in options_data)
+
+        # Format Data
+        options_list = []
+        for o in options_data:
+            pct = round((o['vote_count'] / total_votes * 100), 1) if total_votes > 0 else 0
+            options_list.append({
+                'text': o['option'],
+                'votes': o['vote_count'],
+                'percentage': pct
+            })
+            
+        most_voted = options_list[0]['text'] if options_list and options_list[0]['votes'] > 0 else None
+
+    finally:
         cursor.close()
         conn.close()
-        return render_template("404.html"), 404
 
-    poll_id    = poll["id"]
-    now=datetime.now(timezone.utc)
-    is_expired=now>=poll["end_time"]
-    user_id    = session.get('user_id')
-    is_creator = user_id and \
-                 int(user_id) == int(poll["user_id"])
-
-    has_voted    = False
-    voted_option = None
-
-    if user_id:
-        cursor.execute("""
-            SELECT v.id, o.option as voted_option
-            FROM votes v
-            JOIN options o
-              ON o.id = v.selected_option_id
-            WHERE v.poll_id    = %s
-            AND   v.created_id = %s
-            LIMIT 1
-        """, (poll_id, user_id))
-        vote = cursor.fetchone()
-
-        has_voted    = vote is not None
-        voted_option = vote['voted_option'] \
-                       if vote else None
-
-    cursor.close()
-    conn.close()
-
-    poll_data = {
-        "id":          poll["id"],
-        "question":    poll["question"],
-        "end_time":    poll["end_time"],
-        "user_id":     poll["user_id"],
-        "share_token": poll["share_token"]
-    }
-
-    is_admin = session.get('role') == 'admin'
-    show_results = is_expired or is_creator or is_admin
-
-    return render_template("results.html",
-                           poll         = poll_data,
-                           is_expired   = is_expired,
-                           is_creator   = is_creator,
-                           has_voted    = has_voted,
-                           voted_option = voted_option,
-                           show_results = show_results)
-
+    return render_template("results.html", 
+        poll=poll, # Pass the whole poll object (easier)
+        is_expired=is_expired, 
+        is_creator=is_creator, 
+        has_voted=has_voted, 
+        voted_option=voted_option, 
+        show_results=show_results,
+        is_admin=is_admin,
+        options_list=options_list,      
+        total_votes=total_votes,   
+        most_voted=most_voted      
+    )
 
 
 

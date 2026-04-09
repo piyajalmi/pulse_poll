@@ -212,67 +212,57 @@
 
 {% if recent_polls %}
 <div class="admin-table-scroll-wrapper">
-<div class="db-polls-table">
+<table id="adminPollsTable" class="table table-striped">
+    <thead>
+        <tr>
+            <th>Question</th>
+            <th>Created By</th>
+            <th>Status</th>
+            <th>Votes</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
 
-    <!-- Header -->
-    <div class="db-polls-table-header"
-         style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
-        <span>Question</span>
-        <span>Created By</span>
-        <span>Status</span>
-        <span>Votes</span>
-        <span>Actions</span>
-    </div>
+    <tbody>
+        {% for poll in recent_polls %}
+        <tr>
+            <td>{{ poll.question }}</td>
 
-    <!-- Rows -->
-    {% for poll in recent_polls %}
-    <div class="db-polls-table-row"
-         style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+            <td>
+                <i class="bi bi-person me-1"></i>
+                {{ poll.first_name }} {{ poll.last_name }}
+            </td>
 
-        <span class="db-poll-question">
-            {{ poll.question }}
-        </span>
+            <td>
+                <span class="js-poll-status
+                    {% if poll.status == 'Active' %}
+                        db-badge-active
+                    {% elif poll.status == 'Not Started' %}
+                        mp-badge-not-started
+                    {% else %}
+                        mp-badge-expired
+                    {% endif %}"
+                    data-poll-start="{{ poll.start_time.isoformat() if poll.start_time else '' }}"
+                    data-poll-end="{{ poll.end_time.isoformat() if poll.end_time else '' }}">
+                    <span class="js-poll-status-text">{{ poll.status }}</span>
+                </span>
+            </td>
 
-        <span class="db-poll-votes">
-            <i class="bi bi-person me-1"></i>
-            {{ poll.first_name }} {{ poll.last_name }}
-        </span>
+            <td>
+                <i class="bi bi-hand-index-thumb me-1"></i>
+                {{ poll.vote_count }}
+            </td>
 
-        <span>
-            <span class="db-poll-badge
-                {% if poll.status == 'Active' %}
-                    db-badge-active
-                {% elif poll.status == 'Not Started' %}
-                    mp-badge-not-started
-                {% else %}
-                    mp-badge-expired
-                {% endif %}">
-                {{ poll.status }}
-            </span>
-        </span>
-
-        <span class="db-poll-votes">
-            <i class="bi bi-hand-index-thumb me-1"></i>
-            {{ poll.vote_count }}
-        </span>
-
-        <span class="db-poll-actions">
-            <a href="/poll/{{ poll.share_token }}/results"
-               class="db-action-btn"
-               title="View Results">
-                <i class="bi bi-bar-chart-fill"></i>
-            </a>
-            <!-- <a href="/poll/{{ poll.share_token }}"
-               class="db-action-btn"
-               title="Poll Detail">
-                <i class="bi bi-eye-fill"></i>
-            </a> -->
-        </span>
-
-    </div>
-    {% endfor %}
-
-</div>
+            <td>
+                <a href="/poll/{{ poll.share_token }}/results"
+                   class="db-action-btn">
+                    <i class="bi bi-bar-chart-fill"></i>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 </div>
 
 {% else %}
@@ -281,5 +271,19 @@
     <p>No polls found.</p>
 </div>
 {% endif %}
+{% block extra_js %}
+<script>
+$(document).ready(function () {
 
+    if (!$.fn.DataTable.isDataTable('#adminPollsTable')) {
+        $('#adminPollsTable').DataTable({
+            pageLength: 5,
+            ordering: true,
+            searching: true
+        });
+    }
+
+});
+</script>
+{% endblock %}
 {% endblock %}
